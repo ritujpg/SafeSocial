@@ -1,0 +1,9 @@
+[
+  {
+    "id": "ADM-001",
+    "username": "admin",
+    "email": "admin@safesocial.com",
+    "password": "admin123",
+    "fullName": "John Admin"
+  }
+]

@@ -15,21 +15,20 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+  e.preventDefault();
+  setError('');
+  setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      if (login(email, password)) {
-        navigate('/');
-      } else {
-        setError('Invalid credentials. Try admin/admin123');
-      }
-      setLoading(false);
-    }, 500);
-  };
+  const success = await login(email, password);
 
+  if (success) {
+    navigate('/');
+  } else {
+    setError('Invalid credentials');
+  }
+
+  setLoading(false);
+};
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
