@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { ArrowUpRight, Users, AlertCircle, AlertTriangle, Image, TrendingUp } from 'lucide-react';
@@ -27,6 +27,20 @@ const colors = ['#4A90E2', '#14B8A6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'
 
 export default function Dashboard() {
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
+  const [stats, setStats] = useState({
+    totalReports: 0,
+    pendingReports: 0,
+    investigatingReports: 0,
+    resolvedReports: 0,
+  });
+  useEffect(() => {
+  fetch("/api/dashboard/stats")
+    .then((res) => res.json())
+    .then((data) => {
+      setStats(data.stats);
+    })
+    .catch((err) => console.error(err));
+}, []);
 
   const recentAlerts = mockAlerts.slice(0, 5);
 
@@ -43,7 +57,7 @@ export default function Dashboard() {
         <Link to="/activity-logs">
           <StatCard
             label="Total Users Monitored"
-            value={dashboardStats.totalUsersMonitored}
+            value={stats.totalReports}
             icon={Users}
             color="bg-blue-500"
           />
@@ -51,7 +65,7 @@ export default function Dashboard() {
         <Link to="/fake-accounts">
           <StatCard
             label="Fake Accounts Detected"
-            value={dashboardStats.fakeAccountsDetected}
+            value={stats.pendingReports}
             icon={AlertCircle}
             color="bg-amber-500"
           />
@@ -59,7 +73,7 @@ export default function Dashboard() {
         <Link to="/cyberbullying">
           <StatCard
             label="Harassment Cases"
-            value={dashboardStats.harassmentCasesDetected}
+            value={stats.investigatingReports}
             icon={AlertCircle}
             color="bg-orange-500"
           />
@@ -67,7 +81,7 @@ export default function Dashboard() {
         <Link to="/threats">
           <StatCard
             label="Threat Alerts"
-            value={dashboardStats.threatAlerts}
+            value={stats.resolvedReports}
             icon={AlertTriangle}
             color="bg-red-500"
           />
@@ -75,7 +89,7 @@ export default function Dashboard() {
         <Link to="/image-misuse">
           <StatCard
             label="Image Misuse Cases"
-            value={dashboardStats.imageMisuseCases}
+            value={0}
             icon={Image}
             color="bg-teal-500"
           />
@@ -83,7 +97,7 @@ export default function Dashboard() {
         <Link to="/investigation">
           <StatCard
             label="High Risk Users"
-            value={dashboardStats.highRiskUsers}
+            value={0}
             icon={TrendingUp}
             color="bg-purple-500"
           />

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { mockActivityLogs } from '@/lib/mock-data';
@@ -7,18 +7,23 @@ import { cn } from '@/lib/utils';
 const ITEMS_PER_PAGE = 15;
 
 export default function ActivityLogs() {
+  const [logs, setLogs] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState('timestamp');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
-
-  let filtered = mockActivityLogs.filter(log =>
-    log.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    log.activity.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    log.userId.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
+useEffect(() => {
+  fetch("/api/activity-logs")
+    .then((res) => res.json())
+    .then((data) => {
+      setLogs(data.logs || []);
+    });
+}, []);
+  let filtered = logs.filter((log) =>
+  (log.action || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+  (log.details || "").toLowerCase().includes(searchQuery.toLowerCase())
+);
   if (filterStatus) {
     filtered = filtered.filter(log => log.status === filterStatus);
   }
@@ -137,18 +142,19 @@ export default function ActivityLogs() {
             <tbody>
               {paginated.map((log) => (
                 <tr key={log.id} className="border-b border-border hover:bg-muted transition-colors">
-                  <td className="px-6 py-4 text-muted-foreground text-xs">{log.userId}</td>
-                  <td className="px-6 py-4 font-medium text-foreground">{log.username}</td>
-                  <td className="px-6 py-4 text-foreground">{log.activity}</td>
+                  <td className="px-6 py-4 text-muted-foreground text-xs">SYSTEM</td>
+                  <td className="px-6 py-4 font-medium text-foreground">SafeSocial</td>
+                  <td className="px-6 py-4 text-foreground">{log.action}</td>
                   <td className="px-6 py-4 text-muted-foreground text-xs">
-                    {log.timestamp.toLocaleDateString()} {log.timestamp.toLocaleTimeString()}
+                    {new Date(log.timestamp).toLocaleDateString()}{" "}
+                    {new Date(log.timestamp).toLocaleTimeString()}
                   </td>
                   <td className="px-6 py-4">
-                    <span className={cn('rounded-full px-3 py-1 text-xs font-medium', getStatusColor(log.status))}>
-                      {log.status.charAt(0).toUpperCase() + log.status.slice(1)}
+                    <span className="rounded-full px-3 py-1 text-xs font-medium bg-green-100 text-green-700">
+                      Success
                     </span>
                   </td>
-                </tr>
+                  </tr>
               ))}
             </tbody>
           </table>

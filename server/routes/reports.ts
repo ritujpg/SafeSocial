@@ -3,6 +3,10 @@ import fs from "fs";
 import path from "path";
 
 const reportsFile = path.join(__dirname, "../data/reports.json");
+const logsFile = path.join(
+  __dirname,
+  "../data/activityLogs.json"
+);
 
 export const createReport: RequestHandler = (req, res) => {
   const { type, title, description, reportedBy } = req.body;
@@ -22,6 +26,20 @@ export const createReport: RequestHandler = (req, res) => {
   };
 
   reports.push(newReport);
+  const logs = JSON.parse(
+  fs.readFileSync(logsFile, "utf8")
+);
+
+logs.push({
+  action: "Report Created",
+  details: title,
+  timestamp: new Date().toISOString(),
+});
+
+fs.writeFileSync(
+  logsFile,
+  JSON.stringify(logs, null, 2)
+);
 
   fs.writeFileSync(
     reportsFile,
