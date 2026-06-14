@@ -2,7 +2,9 @@ import { getActivityLogs } from "./routes/activityLogs";
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { getDashboardStats } from "./routes/dashboard";
+import {
+  getDashboardStats,
+} from "./routes/dashboard";
 import { handleDemo } from "./routes/demo";
 import { register, login } from "./routes/auth";
 import {
@@ -15,7 +17,13 @@ import {
   createReport,
   getReports,
   updateReport,
+  getReportAnalytics,
+  exportReportsPDF,
 } from "./routes/reports";
+import {getMonthlyAnalytics } from "./routes/monthlyAnalytics";
+import { exportCsv } from "./routes/exportCsv";
+
+
 
 export function createServer() {
   const app = express();
@@ -46,10 +54,26 @@ export function createServer() {
   // Reports routes
   app.post("/api/reports", createReport);
   app.get("/api/reports", getReports);
+  app.get(
+  "/api/reports/analytics",
+  getReportAnalytics
+);
   app.patch("/api/reports/:id", updateReport);
-
+  app.get(
+  "/api/reports/monthly",
+  getMonthlyAnalytics
+);
+  app.get(
+  "/api/reports/export/csv",
+  exportCsv
+);
+app.get(
+  "/api/reports/export/pdf",
+  exportReportsPDF
+);
   // Dashboard routes
   app.get("/api/dashboard/stats", getDashboardStats);
+  app.get("/api/dashboard/analytics", getMonthlyAnalytics);
 
   return app;
 }

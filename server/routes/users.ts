@@ -3,8 +3,10 @@ import fs from "fs";
 import path from "path";
 
 const usersFile = path.join(
-  __dirname,
-  "../data/users.json"
+  process.cwd(),
+  "server",
+  "data",
+  "users.json"
 );
 
 const readUsers = () => {

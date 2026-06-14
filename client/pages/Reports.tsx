@@ -1,16 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Download, BarChart3, TrendingUp, Users, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-const monthlyData = [
-  { month: 'Jan', alerts: 245, cases: 123, threats: 45 },
-  { month: 'Feb', alerts: 312, cases: 156, threats: 62 },
-  { month: 'Mar', alerts: 278, cases: 134, threats: 58 },
-  { month: 'Apr', alerts: 389, cases: 201, threats: 81 },
-  { month: 'May', alerts: 456, cases: 234, threats: 102 },
-  { month: 'Jun', alerts: 512, cases: 267, threats: 124 },
-];
+
+
 
 const riskAnalysis = [
   { level: 'Low', count: 2340 },
@@ -19,16 +13,87 @@ const riskAnalysis = [
   { level: 'Critical', count: 156 },
 ];
 
-const alertStats = [
-  { type: 'Fake Accounts', count: 1247 },
-  { type: 'Cyberbullying', count: 892 },
-  { type: 'Threats', count: 345 },
-  { type: 'Image Misuse', count: 567 },
-];
+
 
 export default function Reports() {
   const [dateRange, setDateRange] = useState('month');
+  const [title, setTitle] = useState('');
+  const [type, setType] = useState('Threat');
+  const [description, setDescription] = useState('');
 
+  const [monthlyData, setMonthlyData] = useState<any[]>([]);
+
+  const [analytics, setAnalytics] = useState({
+  fakeAccounts: 0,
+  cyberbullying: 0,
+  threats: 0,
+  pending: 0,
+  investigating: 0,
+  resolved: 0,
+});
+
+
+  const [stats, setStats] = useState({
+  totalReports: 0,
+  pendingReports: 0,
+  investigatingReports: 0,
+  resolvedReports: 0,
+});
+const [riskLevels, setRiskLevels] = useState({
+  low: 0,
+  medium: 0,
+  high: 0,
+  critical: 0,
+});
+const alertStats = [
+  {
+    type: "Fake Accounts",
+    count: analytics.fakeAccounts,
+  },
+  {
+    type: "Cyberbullying",
+    count: analytics.cyberbullying,
+  },
+  {
+    type: "Threats",
+    count: analytics.threats,
+  },
+];
+
+useEffect(() => {
+  fetch("/api/reports/monthly")
+    .then((res) => res.json())
+    .then((data) => {
+      setMonthlyData(data.monthlyData);
+    });
+}, []);
+
+useEffect(() => {
+  fetch("/api/dashboard/analytics")
+    .then((res) => res.json())
+    .then((data) => {
+      setAnalytics(data.analytics);
+    });
+}, []);
+
+useEffect(() => {
+  fetch("/api/dashboard/stats")
+  .then((res) => res.json())
+  .then((data) => {
+    setStats(data.stats);
+    setRiskLevels(data.riskLevels);
+  });
+}, []);
+useEffect(() => {
+  fetch("/api/reports/analytics")
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        setAnalytics(data.analytics);
+      }
+    })
+    .catch(console.error);
+}, []);
   return (
     <div className="space-y-8 p-8">
       {/* Header */}
@@ -70,7 +135,9 @@ export default function Reports() {
             </div>
             <p className="text-sm text-muted-foreground">Total Alerts</p>
           </div>
-          <p className="text-3xl font-bold text-foreground">5,051</p>
+          <p className="text-3xl font-bold text-foreground">
+  {stats.totalReports}
+</p>
           <p className="text-xs text-green-600 mt-2">+12% from last period</p>
         </div>
 
@@ -79,9 +146,11 @@ export default function Reports() {
             <div className="rounded-lg bg-orange-100 p-2">
               <Users className="h-5 w-5 text-orange-600" />
             </div>
-            <p className="text-sm text-muted-foreground">Suspicious Users</p>
+            <p className="text-sm text-muted-foreground">Pending Reports</p>
           </div>
-          <p className="text-3xl font-bold text-foreground">1,247</p>
+          <p className="text-3xl font-bold text-foreground">
+  {stats.pendingReports}
+</p>
           <p className="text-xs text-green-600 mt-2">+8% from last period</p>
         </div>
 
@@ -90,9 +159,11 @@ export default function Reports() {
             <div className="rounded-lg bg-red-100 p-2">
               <BarChart3 className="h-5 w-5 text-red-600" />
             </div>
-            <p className="text-sm text-muted-foreground">Critical Cases</p>
+            <p className="text-sm text-muted-foreground"> Investigating</p>
           </div>
-          <p className="text-3xl font-bold text-foreground">156</p>
+          <p className="text-3xl font-bold text-foreground">
+  {stats.investigatingReports}
+</p>
           <p className="text-xs text-red-600 mt-2">+5% from last period</p>
         </div>
 
@@ -101,9 +172,11 @@ export default function Reports() {
             <div className="rounded-lg bg-green-100 p-2">
               <TrendingUp className="h-5 w-5 text-green-600" />
             </div>
-            <p className="text-sm text-muted-foreground">Resolution Rate</p>
+            <p className="text-sm text-muted-foreground">Resolved Reports</p>
           </div>
-          <p className="text-3xl font-bold text-foreground">87%</p>
+          <p className="text-3xl font-bold text-foreground">
+  {stats.resolvedReports}
+</p>
           <p className="text-xs text-green-600 mt-2">+3% from last period</p>
         </div>
       </div>
@@ -145,20 +218,36 @@ export default function Reports() {
         <div className="rounded-lg border border-border bg-white p-6">
           <h2 className="text-lg font-semibold text-foreground mb-4">Risk Level Distribution</h2>
           <div className="space-y-4">
-            {riskAnalysis.map((item) => (
-              <div key={item.level}>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-foreground">{item.level}</p>
-                  <p className="text-sm font-semibold text-foreground">{item.count}</p>
-                </div>
-                <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full bg-primary rounded-full transition-all"
-                    style={{ width: `${(item.count / 2340) * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+            {[
+  { level: "Low", count: riskLevels.low },
+  { level: "Medium", count: riskLevels.medium },
+  { level: "High", count: riskLevels.high },
+  { level: "Critical", count: riskLevels.critical },
+].map((item) => (
+  <div key={item.level}>
+    <div className="flex items-center justify-between mb-2">
+      <p className="text-sm font-medium text-foreground">
+        {item.level}
+      </p>
+      <p className="text-sm font-semibold text-foreground">
+        {item.count}
+      </p>
+    </div>
+
+    <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+      <div
+        className="h-full bg-primary rounded-full transition-all"
+        style={{
+          width: `${
+            stats.totalReports > 0
+              ? (item.count / stats.totalReports) * 100
+              : 0
+          }%`,
+        }}
+      />
+    </div>
+  </div>
+))}
           </div>
         </div>
 
@@ -171,7 +260,9 @@ export default function Reports() {
                 <p className="text-sm font-medium text-foreground">Fake Accounts Detected</p>
                 <p className="text-xs text-muted-foreground mt-1">Automated detection system</p>
               </div>
-              <p className="text-2xl font-bold text-primary">1,247</p>
+              <p className="text-2xl font-bold text-primary">
+  {analytics.fakeAccounts}
+</p>
             </div>
             <div className="border-t border-border pt-4">
               <div className="flex items-start justify-between">
@@ -179,7 +270,9 @@ export default function Reports() {
                   <p className="text-sm font-medium text-foreground">Cyberbullying Cases</p>
                   <p className="text-xs text-muted-foreground mt-1">Content analysis</p>
                 </div>
-                <p className="text-2xl font-bold text-orange-600">892</p>
+                <p className="text-2xl font-bold text-orange-600">
+  {analytics.cyberbullying}
+</p>
               </div>
             </div>
             <div className="border-t border-border pt-4">
@@ -188,7 +281,9 @@ export default function Reports() {
                   <p className="text-sm font-medium text-foreground">Threat Alerts</p>
                   <p className="text-xs text-muted-foreground mt-1">Keyword matching</p>
                 </div>
-                <p className="text-2xl font-bold text-red-600">345</p>
+                <p className="text-2xl font-bold text-red-600">
+  {analytics.threats}
+</p>
               </div>
             </div>
           </div>
@@ -200,14 +295,26 @@ export default function Reports() {
         <h2 className="text-lg font-semibold text-foreground mb-4">Export Report</h2>
         <p className="text-sm text-muted-foreground mb-6">Download comprehensive reports in your preferred format</p>
         <div className="flex gap-3 flex-wrap">
-          <Button className="gap-2">
-            <Download className="h-4 w-4" />
-            Export as PDF
-          </Button>
-          <Button variant="outline" className="gap-2">
-            <Download className="h-4 w-4" />
-            Export as CSV
-          </Button>
+          <Button
+  onClick={() =>
+    window.open(
+      "http://localhost:8081/api/reports/export/pdf",
+      "_blank"
+    )
+  }
+>
+  Export as PDF
+</Button>
+          <Button
+  onClick={() => {
+    window.open(
+      "/api/reports/export/csv",
+      "_blank"
+    );
+  }}
+>
+  Export as CSV
+</Button>
           <Button variant="outline" className="gap-2">
             <Download className="h-4 w-4" />
             Export as Excel
@@ -218,6 +325,77 @@ export default function Reports() {
           </Button>
         </div>
       </div>
+      {/* Create Report */}
+<div className="rounded-lg border border-border bg-white p-6">
+  <h2 className="text-lg font-semibold text-foreground mb-4">
+    Create Report
+  </h2>
+
+  <div className="grid gap-4">
+    <input
+      type="text"
+      placeholder="Report Title"
+      className="border rounded-lg p-3"
+      id="reportTitle"
+    />
+
+    <select
+      className="border rounded-lg p-3"
+      id="reportType"
+    >
+      <option value="Threat">Threat</option>
+      <option value="Cyberbullying">Cyberbullying</option>
+      <option value="Fake Account">Fake Account</option>
+      <option value="Image Misuse">Image Misuse</option>
+    </select>
+
+    <textarea
+      placeholder="Description"
+      className="border rounded-lg p-3"
+      rows={4}
+      id="reportDescription"
+    />
+
+    <Button
+      onClick={async () => {
+        const title = (
+          document.getElementById("reportTitle") as HTMLInputElement
+        ).value;
+
+        const type = (
+          document.getElementById("reportType") as HTMLSelectElement
+        ).value;
+
+        const description = (
+          document.getElementById("reportDescription") as HTMLTextAreaElement
+        ).value;
+
+        const response = await fetch("/api/reports", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title,
+            type,
+            description,
+            reportedBy: "SafeSocial User",
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert("Report submitted successfully!");
+        } else {
+          alert("Failed to submit report");
+        }
+      }}
+    >
+      Submit Report
+    </Button>
+  </div>
+</div>
 
       {/* Report Schedule */}
       <div className="rounded-lg border border-border bg-white p-6">

@@ -2,16 +2,24 @@ import { RequestHandler } from "express";
 import fs from "fs";
 import path from "path";
 
-const usersFile = path.join(__dirname, "../data/users.json");
+const usersFile = path.join(
+  process.cwd(),
+  "server",
+  "data",
+  "users.json"
+);
 
 export const register: RequestHandler = (req, res) => {
   const { name, username, email, password } = req.body;
 
-  const users = JSON.parse(fs.readFileSync(usersFile, "utf8"));
+  const users = JSON.parse(
+    fs.readFileSync(usersFile, "utf8")
+  );
 
   const existingUser = users.find(
     (user: any) =>
-      user.username === username || user.email === email
+      user.username === username ||
+      user.email === email
   );
 
   if (existingUser) {
@@ -31,7 +39,10 @@ export const register: RequestHandler = (req, res) => {
 
   users.push(newUser);
 
-  fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+  fs.writeFileSync(
+    usersFile,
+    JSON.stringify(users, null, 2)
+  );
 
   res.json({
     success: true,
@@ -43,11 +54,14 @@ export const register: RequestHandler = (req, res) => {
 export const login: RequestHandler = (req, res) => {
   const { email, password } = req.body;
 
-  const users = JSON.parse(fs.readFileSync(usersFile, "utf8"));
+  const users = JSON.parse(
+    fs.readFileSync(usersFile, "utf8")
+  );
 
   const user = users.find(
     (u: any) =>
-      (u.username === email || u.email === email) &&
+      (u.username === email ||
+        u.email === email) &&
       u.password === password
   );
 

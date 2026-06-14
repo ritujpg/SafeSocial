@@ -1,11 +1,21 @@
 import { RequestHandler } from "express";
 import fs from "fs";
 import path from "path";
+import PDFDocument from "pdfkit";
 
-const reportsFile = path.join(__dirname, "../data/reports.json");
+// Use project root paths instead of __dirname
+const reportsFile = path.join(
+  process.cwd(),
+  "server",
+  "data",
+  "reports.json"
+);
+
 const logsFile = path.join(
-  __dirname,
-  "../data/activityLogs.json"
+  process.cwd(),
+  "server",
+  "data",
+  "activityLogs.json"
 );
 
 export const createReport: RequestHandler = (req, res) => {
@@ -26,20 +36,21 @@ export const createReport: RequestHandler = (req, res) => {
   };
 
   reports.push(newReport);
+
   const logs = JSON.parse(
-  fs.readFileSync(logsFile, "utf8")
-);
+    fs.readFileSync(logsFile, "utf8")
+  );
 
-logs.push({
-  action: "Report Created",
-  details: title,
-  timestamp: new Date().toISOString(),
-});
+  logs.push({
+    action: "Report Created",
+    details: title,
+    timestamp: new Date().toISOString(),
+  });
 
-fs.writeFileSync(
-  logsFile,
-  JSON.stringify(logs, null, 2)
-);
+  fs.writeFileSync(
+    logsFile,
+    JSON.stringify(logs, null, 2)
+  );
 
   fs.writeFileSync(
     reportsFile,
@@ -52,6 +63,7 @@ fs.writeFileSync(
     report: newReport,
   });
 };
+
 export const getReports: RequestHandler = (_req, res) => {
   const reports = JSON.parse(
     fs.readFileSync(reportsFile, "utf8")
@@ -62,6 +74,7 @@ export const getReports: RequestHandler = (_req, res) => {
     reports,
   });
 };
+
 export const updateReport: RequestHandler = (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -93,4 +106,97 @@ export const updateReport: RequestHandler = (req, res) => {
     message: "Report status updated",
     report: reports[reportIndex],
   });
+};
+
+export const getReportAnalytics: RequestHandler = (
+  _req,
+  res
+) => {
+  const reports = JSON.parse(
+    fs.readFileSync(reportsFile, "utf8")
+  );
+
+  const fakeAccounts = reports.filter(
+    (report: any) => report.type === "Fake Account"
+  ).length;
+
+  const cyberbullying = reports.filter(
+    (report: any) => report.type === "Cyberbullying"
+  ).length;
+
+  const threats = reports.filter(
+    (report: any) => report.type === "Threat"
+  ).length;
+
+  const pending = reports.filter(
+    (report: any) => report.status === "Pending"
+  ).length;
+
+  const investigating = reports.filter(
+    (report: any) => report.status === "Investigating"
+  ).length;
+
+  const resolved = reports.filter(
+    (report: any) => report.status === "Resolved"
+  ).length;
+
+  res.json({
+    success: true,
+    analytics: {
+      fakeAccounts,
+      cyberbullying,
+      threats,
+      pending,
+      investigating,
+      resolved,
+    },
+  });
+};
+
+export const exportReportsPDF: RequestHandler = (
+  _req,
+  res
+) => {
+  const reports = JSON.parse(
+    fs.readFileSync(reportsFile, "utf8")
+  );
+
+  const doc = new PDFDocument();
+
+  res.setHeader(
+    "Content-Type",
+    "application/pdf"
+  );
+
+  res.setHeader(
+    "Content-Disposition",
+    "attachment; filename=reports.pdf"
+  );
+
+  doc.pipe(res);
+
+  doc
+    .fontSize(20)
+    .text("SafeSocial Reports", {
+      align: "center",
+    });
+
+  doc.moveDown();
+
+  reports.forEach((report: any, index: number) => {
+    doc
+      .fontSize(12)
+      .text(`Report ${index + 1}`);
+
+    doc.text(`ID: ${report.id}`);
+    doc.text(`Type: ${report.type}`);
+    doc.text(`Title: ${report.title}`);
+    doc.text(`Status: ${report.status}`);
+    doc.text(`Reported By: ${report.reportedBy}`);
+    doc.text(`Created At: ${report.createdAt}`);
+
+    doc.moveDown();
+  });
+
+  doc.end();
 };

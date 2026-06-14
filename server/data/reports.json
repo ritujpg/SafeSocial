@@ -16,5 +16,23 @@
     "reportedBy": "bhavya@gmail.com",
     "status": "Pending",
     "createdAt": "2026-06-11T09:20:27.387Z"
+  },
+  {
+    "id": "RPT-1781255474883",
+    "type": "Fake Account",
+    "title": "Fake Instagram Account",
+    "description": "Account impersonating public figure",
+    "reportedBy": "SafeSocial User",
+    "status": "Pending",
+    "createdAt": "2026-06-12T09:11:14.883Z"
+  },
+  {
+    "id": "RPT-1781266658108",
+    "type": "Cyberbullying",
+    "title": "Fake Instagram Account 1",
+    "description": "cyberbullying",
+    "reportedBy": "SafeSocial User",
+    "status": "Pending",
+    "createdAt": "2026-06-12T12:17:38.108Z"
   }
 ]

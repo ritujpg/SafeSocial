@@ -3,5 +3,15 @@
     "action": "Report Created",
     "details": "Test Activity Log",
     "timestamp": "2026-06-11T09:20:27.387Z"
+  },
+  {
+    "action": "Report Created",
+    "details": "Fake Instagram Account",
+    "timestamp": "2026-06-12T09:11:14.887Z"
+  },
+  {
+    "action": "Report Created",
+    "details": "Fake Instagram Account 1",
+    "timestamp": "2026-06-12T12:17:38.109Z"
   }
 ]

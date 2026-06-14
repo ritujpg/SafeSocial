@@ -3,8 +3,10 @@ import fs from "fs";
 import path from "path";
 
 const reportsFile = path.join(
-  __dirname,
-  "../data/reports.json"
+  process.cwd(),
+  "server",
+  "data",
+  "reports.json"
 );
 
 export const getDashboardStats: RequestHandler = (
@@ -37,5 +39,39 @@ export const getDashboardStats: RequestHandler = (
       investigatingReports,
       resolvedReports,
     },
+    riskLevels: {
+      low: resolvedReports,
+      medium: investigatingReports,
+      high: pendingReports,
+      critical: 0,
+    },
+  });
+};
+
+export const getMonthlyAnalytics: RequestHandler = (
+  _req,
+  res
+) => {
+  const reports = JSON.parse(
+    fs.readFileSync(reportsFile, "utf8")
+  );
+
+  const analytics = {
+    fakeAccounts: reports.filter(
+      (r: any) => r.type === "Fake Account"
+    ).length,
+
+    cyberbullying: reports.filter(
+      (r: any) => r.type === "Cyberbullying"
+    ).length,
+
+    threats: reports.filter(
+      (r: any) => r.type === "Threat"
+    ).length,
+  };
+
+  res.json({
+    success: true,
+    analytics,
   });
 };

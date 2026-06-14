@@ -3,8 +3,10 @@ import fs from "fs";
 import path from "path";
 
 const logsFile = path.join(
-  __dirname,
-  "../data/activityLogs.json"
+  process.cwd(),
+  "server",
+  "data",
+  "activityLogs.json"
 );
 
 export const getActivityLogs: RequestHandler = (
