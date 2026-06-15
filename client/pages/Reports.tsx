@@ -298,9 +298,9 @@ useEffect(() => {
           <Button
   onClick={() =>
     window.open(
-      "http://localhost:8081/api/reports/export/pdf",
-      "_blank"
-    )
+  "http://localhost:3000/api/reports/export/pdf",
+  "_blank"
+)
   }
 >
   Export as PDF
@@ -315,14 +315,14 @@ useEffect(() => {
 >
   Export as CSV
 </Button>
-          <Button variant="outline" className="gap-2">
-            <Download className="h-4 w-4" />
-            Export as Excel
-          </Button>
-          <Button variant="outline" className="gap-2">
-            <Download className="h-4 w-4" />
-            Email Report
-          </Button>
+          <Button disabled>
+  Export as Excel
+</Button>
+
+<Button disabled>
+  Email Report
+</Button>
+          
         </div>
       </div>
       {/* Create Report */}
