@@ -5,7 +5,12 @@ import cors from "cors";
 import { getDashboardStats } from "./routes/dashboard";
 import { handleDemo } from "./routes/demo";
 import { register, login } from "./routes/auth";
-import { getUsers } from "./routes/users";
+import {
+  getUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+} from "./routes/users";
 import {
   createReport,
   getReports,
@@ -35,7 +40,9 @@ export function createServer() {
 
   // Users route
   app.get("/api/users", getUsers);
-  app.get("/api/activity-logs", getActivityLogs);
+  app.post("/api/users", createUser);
+  app.put("/api/users/:id", updateUser);
+  app.delete("/api/users/:id", deleteUser);
   // Reports routes
   app.post("/api/reports", createReport);
   app.get("/api/reports", getReports);
