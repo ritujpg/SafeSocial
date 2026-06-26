@@ -1,6 +1,5 @@
 import { RequestHandler } from "express";
-import fs from "fs";
-import path from "path";
+
 
 const usersFile = path.join(
   process.cwd(),
