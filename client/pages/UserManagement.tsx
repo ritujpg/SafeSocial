@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, X, Plus, Edit2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { mockUsers, User } from '@/lib/mock-data';
@@ -12,9 +12,27 @@ export default function UserManagement() {
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<any[]>([]);
+    useEffect(() => {
+      loadUsers();
+    }, []);
+
+    const loadUsers = async () => {
+      try {
+        const res = await fetch("/api/users");
+        const data = await res.json();
+
+        setUsers(data.users || []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState("active");
 
   let filtered = users.filter(user =>
     user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -47,6 +65,44 @@ export default function UserManagement() {
     return 'text-green-600';
   };
 
+  const saveUser = async () => {
+
+  try {
+
+    const response = await fetch("/api/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        fullName,
+        username,
+        email,
+        accountStatus: status,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to save user");
+    }
+
+    await loadUsers();
+
+    setShowModal(false);
+
+    setFullName("");
+    setUsername("");
+    setEmail("");
+    setStatus("active");
+
+    alert("User added successfully!");
+
+  } catch (err) {
+    console.error(err);
+    alert("Error adding user");
+  }
+
+};
   return (
     <div className="space-y-6 p-8">
       {/* Header */}
@@ -255,30 +311,42 @@ export default function UserManagement() {
               <input
                 type="text"
                 placeholder="Full Name"
-                defaultValue={editingUser?.fullName || ''}
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
                 className="w-full rounded-lg border border-input bg-background px-4 py-2 text-sm"
               />
               <input
                 type="text"
                 placeholder="Username"
-                defaultValue={editingUser?.username || ''}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="w-full rounded-lg border border-input bg-background px-4 py-2 text-sm"
               />
               <input
                 type="email"
                 placeholder="Email"
-                defaultValue={editingUser?.email || ''}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-lg border border-input bg-background px-4 py-2 text-sm"
               />
-              <select className="w-full rounded-lg border border-input bg-background px-4 py-2 text-sm">
-                <option>Active</option>
-                <option>Suspended</option>
-                <option>Flagged</option>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="w-full rounded-lg border border-input bg-background px-4 py-2 text-sm"
+              >
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+                <option value="flagged">Flagged</option>
               </select>
             </div>
 
             <div className="mt-6 flex gap-3">
-              <Button className="flex-1">Save Changes</Button>
+              <Button
+                className="flex-1"
+                onClick={saveUser}
+              >
+                Save User
+              </Button>
               <Button variant="outline" className="flex-1" onClick={() => { setShowModal(false); setEditingUser(null); }}>Cancel</Button>
             </div>
           </div>

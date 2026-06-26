@@ -5,6 +5,7 @@ import pandas as pd
 import psycopg2
 from dotenv import load_dotenv
 from sklearn.ensemble import IsolationForest
+from sklearn.preprocessing import StandardScaler
 
 # -------------------------------
 # Load Environment Variables
@@ -88,22 +89,32 @@ features = df[
 ]
 
 # -------------------------------
+# Scale Features
+# -------------------------------
+
+scaler = StandardScaler()
+scaled_features = scaler.fit_transform(features)
+
+
+# -------------------------------
 # Train Isolation Forest
 # -------------------------------
 model = IsolationForest(
-    contamination=0.15,
+    n_estimators=300,
+    contamination=0.10,
+    max_samples="auto",
     random_state=42
 )
 
-model.fit(features)
+model.fit(scaled_features)
 
-df["prediction"] = model.predict(features)
+df["prediction"] = model.predict(scaled_features)
 
 # decision_function:
 # Higher = normal
 # Lower = anomaly
 
-df["anomaly_score"] = model.decision_function(features)
+df["anomaly_score"] = model.decision_function(scaled_features)
 
 print("\n====== Prediction Results ======\n")
 
@@ -171,40 +182,136 @@ for _, row in df.iterrows():
         anomaly = abs(float(row["anomaly_score"]))
 
         # -------------------------
-        # Severity
+        # Better Severity Calculation
         # -------------------------
-        if anomaly >= 0.20:
+
+        severity_score = 0
+
+        # Isolation Forest anomaly (40 marks)
+        severity_score += min(anomaly * 180, 40)
+
+        # Existing Risk Score (30 marks)
+        severity_score += row["risk_score"] * 0.30
+
+        # Account Age (10 marks)
+        if row["account_age_days"] <= 7:
+            severity_score += 10
+        elif row["account_age_days"] <= 30:
+            severity_score += 5
+
+        # Account Status (10 marks)
+        status = str(row["status"]).lower()
+
+        if status == "blocked":
+            severity_score += 10
+        elif status == "suspended":
+            severity_score += 7
+
+        # Existing Risk Level (10 marks)
+        risk_level = str(row["risk_level"]).lower()
+
+        if risk_level == "high":
+            severity_score += 10
+        elif risk_level == "medium":
+            severity_score += 5
+
+        severity_score = min(100, severity_score)
+
+        # Final Severity
+        if severity_score >= 75:
             severity = "HIGH"
-        elif anomaly >= 0.10:
+        elif severity_score >= 45:
             severity = "MEDIUM"
         else:
             severity = "LOW"
 
         # -------------------------
         # Dynamic Suspicion Reason
-        # -------------------------
         reasons = []
 
-        # Isolation Forest always detected anomaly
-        reasons.append("Statistical anomaly detected by Isolation Forest")
+        # Main anomaly
+        reasons.append("Isolation Forest detected abnormal behaviour")
 
+        # Risk score
         if row["risk_score"] >= 90:
-            reasons.append("Extremely high user risk score")
+            reasons.append("Critical risk score")
 
-        elif row["risk_score"] >= 70:
-            reasons.append("High user risk score")
+        elif row["risk_score"] >= 75:
+            reasons.append("High risk score")
 
-        if row["account_age_days"] <= 7:
-            reasons.append("Recently created account")
+        elif row["risk_score"] >= 60:
+            reasons.append("Elevated risk score")
 
-        if str(row["status"]).lower() == "suspended":
-            reasons.append("Suspended account activity")
+        # Account age
+        if row["account_age_days"] <= 3:
+            reasons.append("Very recently created account")
 
-        # If no specific reason matched
+        elif row["account_age_days"] <= 7:
+            reasons.append("New account")
+
+        # Account status
+        status = str(row["status"]).lower()
+
+        if status == "blocked":
+            reasons.append("Blocked account")
+
+        elif status == "suspended":
+            reasons.append("Suspended account")
+
+        # High anomaly
+        if anomaly >= 0.20:
+            reasons.append("Very high anomaly score")
+
+        elif anomaly >= 0.10:
+            reasons.append("Moderate anomaly score")
+
+        # Existing risk level
+        risk_level = str(row["risk_level"]).lower()
+
+        if risk_level == "high":
+            reasons.append("Previously classified as high risk")
+
+        elif risk_level == "medium":
+            reasons.append("Previously classified as medium risk")
+
+        # Fallback
         if len(reasons) == 1:
-            reasons.append("Unusual behavioural pattern detected")
+            reasons.append("Behaviour deviates from normal users")
 
         suspicion_reason = ", ".join(reasons)
+
+        # -------------------------
+        # Update users table
+        # -------------------------
+
+        # -------------------------
+        # Calculate Updated Risk Score
+        # -------------------------
+
+        risk_score = round(
+            min(
+                100,
+                (
+                    row["risk_score"] * 0.45 +
+                    severity_score * 0.55
+                )
+            )
+        )
+
+        cursor.execute(
+            """
+            UPDATE users
+            SET
+                risk_score = %s,
+                risk_level = %s
+            WHERE id = %s
+            """,
+            (
+                risk_score,
+                severity,
+                str(row["id"])
+            )
+        )
 
         cursor.execute(
             "SELECT id FROM fake_accounts WHERE user_id = %s",

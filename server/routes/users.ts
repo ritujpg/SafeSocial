@@ -1,122 +1,241 @@
 import { RequestHandler } from "express";
-import fs from "node:fs";
-import path from "node:path";
+import { pool } from "../db";
+import { exec } from "child_process";
 
-
-const usersFile = path.join(
-  process.cwd(),
-  "server",
-  "data",
-  "users.json"
-);
-
-const readUsers = () => {
-  if (!fs.existsSync(usersFile)) {
-    fs.writeFileSync(usersFile, "[]");
-  }
-
-  return JSON.parse(
-    fs.readFileSync(usersFile, "utf8")
-  );
-};
-
-const saveUsers = (users: any[]) => {
-  fs.writeFileSync(
-    usersFile,
-    JSON.stringify(users, null, 2)
-  );
-};
-
-export const getUsers: RequestHandler = (
+export const getUsers: RequestHandler = async (
   _req,
   res
 ) => {
-  const users = readUsers();
+  try {
 
-  res.json({
-    success: true,
-    count: users.length,
-    users,
-  });
-};
+    const result = await pool.query(`
+      SELECT
+        id,
+        username,
+        display_name,
+        email,
+        risk_score,
+        risk_level,
+        status,
+        created_at
+      FROM users
+      ORDER BY created_at DESC;
+    `);
 
-export const createUser: RequestHandler = (
-  req,
-  res
-) => {
-  const users = readUsers();
+    const users = result.rows.map((user) => ({
+      id: user.id,
+      fullName: user.display_name,
+      username: user.username,
+      email: user.email,
+      accountStatus: user.status,
+      riskScore: user.risk_score,
+      riskLevel: user.risk_level,
+      lastLogin: user.created_at,
+      alertsCount: 0,
+      activityCount: 0,
+    }));
 
-  const newUser = {
-    id: `USR${Date.now()}`,
-    fullName: req.body.fullName,
-    username: req.body.username,
-    email: req.body.email,
-    accountStatus:
-      req.body.accountStatus || "active",
-    riskScore: req.body.riskScore || 0,
-    alertsCount: req.body.alertsCount || 0,
-    activityCount:
-      req.body.activityCount || 0,
-    lastLogin: new Date().toISOString(),
-  };
-
-  users.push(newUser);
-  saveUsers(users);
-
-  res.status(201).json({
-    success: true,
-    user: newUser,
-  });
-};
-
-export const updateUser: RequestHandler = (
-  req,
-  res
-) => {
-  const { id } = req.params;
-
-  const users = readUsers();
-
-  const index = users.findIndex(
-    (user: any) => user.id === id
-  );
-
-  if (index === -1) {
-    return res.status(404).json({
-      success: false,
-      message: "User not found",
+    res.json({
+      success: true,
+      count: users.length,
+      users,
     });
+
+  } catch (err: any) {
+
+    console.error(err);
+
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+
+  }
+};
+
+export const createUser: RequestHandler = async (
+  req,
+  res
+) => {
+
+  try {
+
+    const {
+      fullName,
+      username,
+      email,
+      accountStatus,
+    } = req.body;
+
+    const dbStatus =
+      accountStatus === "active"
+        ? "ACTIVE"
+        : accountStatus === "suspended"
+        ? "SUSPENDED"
+        : "UNDER_REVIEW";
+
+    const result = await pool.query(
+      `
+      INSERT INTO users
+      (
+        username,
+        display_name,
+        email,
+        risk_score,
+        risk_level,
+        status,
+        created_at
+      )
+      VALUES
+      (
+        $1,
+        $2,
+        $3,
+        0,
+        'LOW',
+        $4,
+        NOW()
+      )
+      RETURNING *;
+      `,
+      [
+        username,
+        fullName,
+        email,
+        dbStatus,
+      ]
+    );
+
+    exec(
+      "python3 server/ml/isolation_forest.py",
+      (err, stdout, stderr) => {
+
+        if (err) {
+          console.error(err);
+          return;
+        }
+
+        console.log(stdout);
+
+        if (stderr) {
+          console.log(stderr);
+        }
+
+      }
+    );
+
+    res.status(201).json({
+      success: true,
+      user: result.rows[0],
+    });
+
+  } catch (err: any) {
+
+    console.error(err);
+
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+
   }
 
-  users[index] = {
-    ...users[index],
-    ...req.body,
-  };
-
-  saveUsers(users);
-
-  res.json({
-    success: true,
-    user: users[index],
-  });
 };
 
-export const deleteUser: RequestHandler = (
+export const updateUser: RequestHandler = async (
   req,
   res
 ) => {
-  const { id } = req.params;
 
-  const users = readUsers();
+  try {
 
-  const filteredUsers = users.filter(
-    (user: any) => user.id !== id
-  );
+    const { id } = req.params;
 
-  saveUsers(filteredUsers);
+    const {
+      fullName,
+      username,
+      email,
+      accountStatus,
+    } = req.body;
 
-  res.json({
-    success: true,
-    message: "User deleted successfully",
-  });
+    const result = await pool.query(
+      `
+      UPDATE users
+      SET
+        username = $1,
+        display_name = $2,
+        email = $3,
+        status = $4
+      WHERE id = $5
+      RETURNING *;
+      `,
+      [
+        username,
+        fullName,
+        email,
+        accountStatus,
+        id,
+      ]
+    );
+
+    if (result.rowCount === 0) {
+
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+
+    }
+
+    res.json({
+      success: true,
+      user: result.rows[0],
+    });
+
+  } catch (err: any) {
+
+    console.error(err);
+
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+
+  }
+
+};
+
+export const deleteUser: RequestHandler = async (
+  req,
+  res
+) => {
+
+  try {
+
+    const { id } = req.params;
+
+    await pool.query(
+      `
+      DELETE FROM users
+      WHERE id = $1;
+      `,
+      [id]
+    );
+
+    res.json({
+      success: true,
+      message: "User deleted successfully",
+    });
+
+  } catch (err: any) {
+
+    console.error(err);
+
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+
+  }
+
 };

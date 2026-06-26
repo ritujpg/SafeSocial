@@ -27,16 +27,8 @@ export const getFakeAccounts = async (
     const accounts = await Promise.all(
       result.rows.map(async (row) => {
 
-        const anomalyRisk = Math.min(
-          100,
-          Math.max(
-            60,
-            Math.round(
-              Math.abs(Number(row.anomaly_score)) * 1200 +
-              Number(row.risk_score) * 0.4
-            )
-          )
-        );
+        // Use the AI-generated risk score from the users table
+        const riskScore = Number(row.risk_score);
 
         // Fetch activity logs
         const logs = await pool.query(
@@ -47,7 +39,8 @@ export const getFakeAccounts = async (
             ip_address
           FROM activity_logs
           WHERE user_id = $1
-          ORDER BY created_at DESC;
+          ORDER BY created_at DESC
+          LIMIT 10;
           `,
           [row.user_id]
         );
@@ -57,7 +50,7 @@ export const getFakeAccounts = async (
           username: row.username,
           email: row.email,
 
-          riskScore: anomalyRisk,
+          riskScore: riskScore,
 
           status: row.status,
 
