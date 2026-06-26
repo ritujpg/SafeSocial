@@ -1,14 +1,23 @@
-import { useState } from 'react';
+import { useEffect, useState } from "react";
 import { Search, X, Shield, TrendingUp, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { mockFakeAccounts } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 
 export default function FakeAccounts() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
+  const [accounts, setAccounts] = useState<any[]>([]);
 
-  const filtered = mockFakeAccounts.filter(acc =>
+  useEffect(() => {
+  fetch("/api/fake-accounts")
+    .then((res) => res.json())
+    .then((data) => {
+      setAccounts(data);
+    })
+    .catch((err) => console.error(err));
+}, []);
+
+  const filtered = accounts.filter((acc) =>
     acc.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
     acc.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -50,7 +59,11 @@ export default function FakeAccounts() {
               </div>
               <div className="rounded-lg bg-red-100 px-3 py-1 text-right">
                 <p className="text-xs font-medium text-red-700">Risk</p>
-                <p className="text-lg font-bold text-red-700">{account.riskScore}</p>
+                <p className="text-lg font-bold text-red-700">
+                  {account.confidence_score
+                    ? `${Math.round(account.confidence_score)}%`
+                    : "N/A"}
+              </p>
               </div>
             </div>
 

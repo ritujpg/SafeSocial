@@ -1,6 +1,7 @@
 import { getActivityLogs } from "./routes/activityLogs";
 import "dotenv/config";
 import express from "express";
+import { getFakeAccounts } from "./routes/fakeAccounts";
 import cors from "cors";
 import {
   getDashboardStats,
@@ -74,6 +75,8 @@ app.get(
   // Dashboard routes
   app.get("/api/dashboard/stats", getDashboardStats);
   app.get("/api/dashboard/analytics", getMonthlyAnalytics);
+
+  app.get("/api/fake-accounts", getFakeAccounts);
 
   return app;
 }
