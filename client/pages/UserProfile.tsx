@@ -9,6 +9,7 @@ export default function UserProfile() {
   const navigate = useNavigate();
 
   const [user, setUser] = useState<any>(null);
+  const [activityLogs, setActivityLogs] = useState<any[]>([]);
 
   useEffect(() => {
 
@@ -20,6 +21,17 @@ export default function UserProfile() {
 
         if (data.success) {
           setUser(data.user);
+        }
+
+      })
+      .catch(console.error);
+
+    fetch(`/api/activity-logs?userId=${userId}`)
+      .then((res) => res.json())
+      .then((data) => {
+
+        if (data.success) {
+          setActivityLogs(data.logs);
         }
 
       })
@@ -116,6 +128,46 @@ export default function UserProfile() {
             <p className="text-sm text-muted-foreground mt-2">Investigations</p>
           </div>
         </div>
+      </div>
+
+      {/* Activity Timeline */}
+      <div className="rounded-lg border border-border bg-white p-6">
+        <h2 className="text-lg font-semibold text-foreground mb-4">
+          Recent Activity
+        </h2>
+
+        {activityLogs.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No activity found.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {activityLogs.map((activity) => (
+              <div
+                key={activity.id}
+                className="rounded-lg border border-border p-4"
+              >
+                <div className="flex items-center justify-between">
+                  <p className="font-medium">
+                    {activity.activity}
+                  </p>
+
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(activity.timestamp).toLocaleString()}
+                  </span>
+                </div>
+
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {activity.description}
+                </p>
+
+                <p className="mt-1 text-xs text-muted-foreground">
+                  IP Address: {activity.ipAddress}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
     

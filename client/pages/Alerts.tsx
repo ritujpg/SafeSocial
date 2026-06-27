@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from "react";
 import { Search, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { mockAlerts, Alert } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function Alerts() {
+  const [alerts, setAlerts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string | null>(null);
   const [filterRisk, setFilterRisk] = useState<string | null>(null);
@@ -17,25 +17,39 @@ export default function Alerts() {
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const [alertStatuses, setAlertStatuses] = useState<Record<string, string>>({});
 
-  // Initialize alert statuses
-  mockAlerts.forEach(alert => {
-    if (!alertStatuses[alert.id]) {
-      alertStatuses[alert.id] = alert.status;
-    }
-  });
+  useEffect(() => {
+    fetch("/api/fake-accounts")
+      .then((res) => res.json())
+      .then((data) => {
+        setAlerts(data);
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    const statuses: Record<string, string> = {};
+
+    alerts.forEach((alert) => {
+      statuses[alert.id] = alert.status || "UNDER_REVIEW";
+    });
+
+    setAlertStatuses(statuses);
+  }, [alerts]);
 
   // Filter alerts
-  let filtered = mockAlerts.filter(alert => {
-    const matchSearch = searchQuery === '' ||
-      alert.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      alert.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      alert.username.toLowerCase().includes(searchQuery.toLowerCase());
+  let filtered = alerts.filter((alert) => {
 
-    const matchType = filterType === null || alert.type === filterType;
-    const matchRisk = filterRisk === null || alert.riskLevel === filterRisk;
-    const matchStatus = filterStatus === null || alertStatuses[alert.id] === filterStatus;
+    const matchSearch =
+      searchQuery === "" ||
+      alert.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      alert.email?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchSearch && matchType && matchRisk && matchStatus;
+    const matchStatus =
+      filterStatus === null ||
+      alert.status === filterStatus;
+
+    return matchSearch && matchStatus;
+
   });
 
   // Sort alerts
@@ -229,19 +243,26 @@ export default function Alerts() {
                       {alert.id}
                     </td>
                     <td className="px-6 py-4 text-foreground">{alert.user}</td>
-                    <td className="px-6 py-4 text-foreground capitalize">{alert.type.replace(/_/g, ' ')}</td>
+                    <td className="px-6 py-4 text-foreground capitalize">Fake Account</td>
                     <td className="px-6 py-4 text-muted-foreground text-xs">
-                      {alert.timestamp.toLocaleDateString()} {alert.timestamp.toLocaleTimeString()}
+                      {new Date(alert.createdAt).toLocaleDateString()}{" "}
+                      {new Date(alert.createdAt).toLocaleTimeString()}
                     </td>
                     <td className="px-6 py-4">
                       <span className={cn(
                         'rounded-full px-3 py-1 text-xs font-medium',
-                        alert.riskLevel === 'critical' && 'bg-red-100 text-red-700',
-                        alert.riskLevel === 'high' && 'bg-orange-100 text-orange-700',
-                        alert.riskLevel === 'medium' && 'bg-yellow-100 text-yellow-700',
-                        alert.riskLevel === 'low' && 'bg-green-100 text-green-700'
+                        alert.riskScore >= 90 && 'bg-red-100 text-red-700',
+                        alert.riskScore >= 70 && 'bg-orange-100 text-orange-700',
+                        alert.riskScore >= 40 && 'bg-yellow-100 text-yellow-700',
+                        alert.riskScore < 40 && 'bg-green-100 text-green-700'
                       )}>
-                        {alert.riskLevel.toUpperCase()}
+                        {alert.riskScore >= 90
+                          ? "CRITICAL"
+                          : alert.riskScore >= 70
+                          ? "HIGH"
+                          : alert.riskScore >= 40
+                          ? "MEDIUM"
+                          : "LOW"}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -320,76 +341,172 @@ export default function Alerts() {
         )}
       </div>
 
-      {/* Alert Details Modal */}
-      {selectedAlert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="max-h-96 w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6">
-            <div className="mb-4 flex items-start justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-foreground">{selectedAlert.id}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{selectedAlert.user} ({selectedAlert.username})</p>
-              </div>
-              <button
-                onClick={() => setSelectedAlert(null)}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-6 w-6" />
-              </button>
+     {/* Alert Details Modal */}
+     {selectedAlert && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-6">
+
+          <div className="mb-6 flex items-start justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">
+                {selectedAlert.username}
+              </h2>
+
+              <p className="text-sm text-muted-foreground mt-1">
+                {selectedAlert.email}
+              </p>
             </div>
 
-            <div className="space-y-4 border-t border-border pt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Alert Type</p>
-                  <p className="mt-1 text-muted-foreground capitalize">{selectedAlert.type.replace(/_/g, ' ')}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">Risk Level</p>
-                  <span className={cn(
-                    'mt-1 inline-block rounded-full px-3 py-1 text-xs font-medium',
-                    selectedAlert.riskLevel === 'critical' && 'bg-red-100 text-red-700',
-                    selectedAlert.riskLevel === 'high' && 'bg-orange-100 text-orange-700',
-                    selectedAlert.riskLevel === 'medium' && 'bg-yellow-100 text-yellow-700',
-                    selectedAlert.riskLevel === 'low' && 'bg-green-100 text-green-700'
-                  )}>
-                    {selectedAlert.riskLevel.toUpperCase()}
+            <button
+              onClick={() => setSelectedAlert(null)}
+              className="text-muted-foreground hover:text-black"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+
+            <div className="rounded-lg border p-4">
+              <p className="text-sm text-muted-foreground">
+                Risk Score
+              </p>
+
+              <p className="mt-2 text-3xl font-bold text-red-600">
+                {selectedAlert.riskScore}
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-4">
+              <p className="text-sm text-muted-foreground">
+                Severity
+              </p>
+
+              <span
+                className={cn(
+                  "mt-2 inline-block rounded-full px-3 py-1 text-sm font-medium",
+                  selectedAlert.riskScore >= 90 &&
+                    "bg-red-100 text-red-700",
+
+                  selectedAlert.riskScore >= 70 &&
+                    selectedAlert.riskScore < 90 &&
+                    "bg-orange-100 text-orange-700",
+
+                  selectedAlert.riskScore >= 40 &&
+                    selectedAlert.riskScore < 70 &&
+                    "bg-yellow-100 text-yellow-700",
+
+                  selectedAlert.riskScore < 40 &&
+                    "bg-green-100 text-green-700"
+                )}
+              >
+                {selectedAlert.riskScore >= 90
+                  ? "CRITICAL"
+                  : selectedAlert.riskScore >= 70
+                  ? "HIGH"
+                  : selectedAlert.riskScore >= 40
+                  ? "MEDIUM"
+                  : "LOW"}
+              </span>
+            </div>
+
+            <div className="rounded-lg border p-4">
+              <p className="text-sm text-muted-foreground">
+                Status
+              </p>
+
+              <p className="mt-2 font-medium">
+                {selectedAlert.status}
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-4">
+              <p className="text-sm text-muted-foreground">
+                Detection Time
+              </p>
+
+              <p className="mt-2">
+                {new Date(selectedAlert.createdAt).toLocaleString()}
+              </p>
+            </div>
+
+          </div>
+
+          <div className="mt-6">
+
+            <h3 className="mb-3 text-lg font-semibold">
+              Suspicious Indicators
+            </h3>
+
+            <div className="flex flex-wrap gap-2">
+              {selectedAlert.suspiciousIndicators.map(
+                (indicator: string, index: number) => (
+                  <span
+                    key={index}
+                    className="rounded-full bg-amber-100 px-3 py-1 text-sm text-amber-700"
+                  >
+                    {indicator}
                   </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Timestamp</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {selectedAlert.timestamp.toLocaleDateString()} {selectedAlert.timestamp.toLocaleTimeString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">Status</p>
-                  <p className="mt-1 text-sm text-muted-foreground capitalize">{alertStatuses[selectedAlert.id]}</p>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm font-medium text-foreground">Description</p>
-                <p className="mt-1 text-sm text-muted-foreground">{selectedAlert.description}</p>
-              </div>
-
-              {selectedAlert.details && (
-                <div>
-                  <p className="text-sm font-medium text-foreground">Details</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{selectedAlert.details}</p>
-                </div>
+                )
               )}
             </div>
 
-            <div className="mt-6 flex gap-3 border-t border-border pt-4">
-              <Button className="flex-1">Take Action</Button>
-              <Button variant="outline" className="flex-1" onClick={() => setSelectedAlert(null)}>Close</Button>
-            </div>
           </div>
+
+          <div className="mt-6">
+
+            <h3 className="mb-3 text-lg font-semibold">
+              Recent Activities
+            </h3>
+
+            <div className="space-y-2">
+              {selectedAlert.activities.map(
+                (activity: string, index: number) => (
+                  <div
+                    key={index}
+                    className="rounded-lg bg-muted p-3 text-sm"
+                  >
+                    {activity}
+                  </div>
+                )
+              )}
+            </div>
+
+          </div>
+
+          <div className="mt-6">
+
+            <h3 className="mb-3 text-lg font-semibold">
+              IP Addresses
+            </h3>
+
+            <div className="space-y-2">
+              {selectedAlert.ipAddresses.map(
+                (ip: string, index: number) => (
+                  <div
+                    key={index}
+                    className="rounded-lg border p-3 font-mono text-sm"
+                  >
+                    {ip}
+                  </div>
+                )
+              )}
+            </div>
+
+          </div>
+
+          <div className="mt-8 flex justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setSelectedAlert(null)}
+            >
+              Close
+            </Button>
+          </div>
+
         </div>
-      )}
+      </div>
+    )}
     </div>
   );
 }

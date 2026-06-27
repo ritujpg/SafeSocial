@@ -79,6 +79,7 @@ app.get(
   app.get("/api/dashboard/analytics", getMonthlyAnalytics);
 
   app.get("/api/fake-accounts", getFakeAccounts);
+  app.get("/api/activity-logs", getActivityLogs);
 
   return app;
 }

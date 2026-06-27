@@ -1,17 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Search, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { mockActivityLogs } from '@/lib/mock-data';
-import { cn } from '@/lib/utils';
 
 const ITEMS_PER_PAGE = 15;
 
 export default function ActivityLogs() {
   const [logs, setLogs] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState('timestamp');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
 useEffect(() => {
   fetch("/api/activity-logs")
@@ -24,25 +19,7 @@ useEffect(() => {
   (log.action || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
   (log.details || "").toLowerCase().includes(searchQuery.toLowerCase())
 );
-  if (filterStatus) {
-    filtered = filtered.filter(log => log.status === filterStatus);
-  }
-
-  filtered.sort((a, b) => {
-    let aVal: any = a[sortBy as keyof typeof a];
-    let bVal: any = b[sortBy as keyof typeof b];
-
-    if (sortBy === 'timestamp') {
-      aVal = new Date(aVal).getTime();
-      bVal = new Date(bVal).getTime();
-    }
-
-    if (sortOrder === 'asc') {
-      return aVal > bVal ? 1 : -1;
-    } else {
-      return aVal < bVal ? 1 : -1;
-    }
-  });
+  
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -83,47 +60,6 @@ useEffect(() => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="text-sm font-medium text-foreground">Status</label>
-            <select
-              value={filterStatus || ''}
-              onChange={(e) => {
-                setFilterStatus(e.target.value || null);
-                setCurrentPage(1);
-              }}
-              className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="">All Status</option>
-              <option value="success">Success</option>
-              <option value="warning">Warning</option>
-              <option value="error">Error</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-foreground">Sort By</label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="timestamp">Date</option>
-              <option value="username">User</option>
-              <option value="activity">Activity</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-foreground">Order</label>
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
-              className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="desc">Newest First</option>
-              <option value="asc">Oldest First</option>
-            </select>
-          </div>
-        </div>
       </div>
 
       {/* Logs Table */}
@@ -144,7 +80,7 @@ useEffect(() => {
                 <tr key={log.id} className="border-b border-border hover:bg-muted transition-colors">
                   <td className="px-6 py-4 text-muted-foreground text-xs">SYSTEM</td>
                   <td className="px-6 py-4 font-medium text-foreground">SafeSocial</td>
-                  <td className="px-6 py-4 text-foreground">{log.action}</td>
+                  <td className="px-6 py-4 text-foreground">{log.activity}</td>
                   <td className="px-6 py-4 text-muted-foreground text-xs">
                     {new Date(log.timestamp).toLocaleDateString()}{" "}
                     {new Date(log.timestamp).toLocaleTimeString()}

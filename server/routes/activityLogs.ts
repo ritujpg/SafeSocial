@@ -1,25 +1,59 @@
 import { RequestHandler } from "express";
-import fs from "fs";
-import path from "path";
+import { pool } from "../db";
 
-const logsFile = path.join(
-  process.cwd(),
-  "server",
-  "data",
-  "activityLogs.json"
-);
-
-export const getActivityLogs: RequestHandler = (
-  _req,
+export const getActivityLogs: RequestHandler = async (
+  req,
   res
 ) => {
-  const logs = JSON.parse(
-    fs.readFileSync(logsFile, "utf8")
-  );
+  try {
 
-  res.json({
-    success: true,
-    count: logs.length,
-    logs,
-  });
+    const { userId } = req.query;
+
+    let query = `
+      SELECT
+        id,
+        user_id,
+        activity_type,
+        description,
+        ip_address,
+        created_at
+      FROM activity_logs
+    `;
+
+    const values: any[] = [];
+
+    if (userId) {
+      query += " WHERE user_id = $1";
+      values.push(userId);
+    }
+
+    query += " ORDER BY created_at DESC";
+
+    const result = await pool.query(query, values);
+
+    const logs = result.rows.map((log) => ({
+      id: log.id,
+      userId: log.user_id,
+      activity: log.activity_type,
+      description: log.description,
+      ipAddress: log.ip_address,
+      timestamp: log.created_at,
+    }));
+
+    res.json({
+      success: true,
+      count: logs.length,
+      logs,
+    });
+
+  } catch (err: any) {
+
+    console.error(err);
+
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+
+  }
 };
