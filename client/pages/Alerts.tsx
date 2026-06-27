@@ -8,11 +8,6 @@ const ITEMS_PER_PAGE = 10;
 export default function Alerts() {
   const [alerts, setAlerts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<string | null>(null);
-  const [filterRisk, setFilterRisk] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState('timestamp');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
   const [alertStatuses, setAlertStatuses] = useState<Record<string, string>>({});
@@ -37,37 +32,18 @@ export default function Alerts() {
   }, [alerts]);
 
   // Filter alerts
-  let filtered = alerts.filter((alert) => {
-
-    const matchSearch =
-      searchQuery === "" ||
-      alert.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      alert.email?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchStatus =
-      filterStatus === null ||
-      alert.status === filterStatus;
-
-    return matchSearch && matchStatus;
-
-  });
+  let filtered = alerts.filter((alert) =>
+    searchQuery === "" ||
+    alert.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    alert.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // Sort alerts
-  filtered.sort((a, b) => {
-    let aVal: any = a[sortBy as keyof typeof a];
-    let bVal: any = b[sortBy as keyof typeof b];
-    
-    if (sortBy === 'timestamp') {
-      aVal = new Date(aVal).getTime();
-      bVal = new Date(bVal).getTime();
-    }
-
-    if (sortOrder === 'asc') {
-      return aVal > bVal ? 1 : -1;
-    } else {
-      return aVal < bVal ? 1 : -1;
-    }
-  });
+  filtered.sort(
+    (a, b) =>
+      new Date(b.createdAt).getTime() -
+      new Date(a.createdAt).getTime()
+  );
 
   // Paginate
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
@@ -111,113 +87,9 @@ export default function Alerts() {
           </div>
         </div>
 
-        {/* Filter Controls */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <div>
-            <label className="text-sm font-medium text-foreground">Alert Type</label>
-            <select
-              value={filterType || ''}
-              onChange={(e) => {
-                setFilterType(e.target.value || null);
-                setCurrentPage(1);
-              }}
-              className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="">All Types</option>
-              <option value="fake_account">Fake Account</option>
-              <option value="cyberbullying">Cyberbullying</option>
-              <option value="threat">Threat</option>
-              <option value="image_misuse">Image Misuse</option>
-              <option value="suspicious_activity">Suspicious Activity</option>
-            </select>
-          </div>
+        
 
-          <div>
-            <label className="text-sm font-medium text-foreground">Risk Level</label>
-            <select
-              value={filterRisk || ''}
-              onChange={(e) => {
-                setFilterRisk(e.target.value || null);
-                setCurrentPage(1);
-              }}
-              className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="">All Levels</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-foreground">Status</label>
-            <select
-              value={filterStatus || ''}
-              onChange={(e) => {
-                setFilterStatus(e.target.value || null);
-                setCurrentPage(1);
-              }}
-              className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="">All Status</option>
-              <option value="open">Open</option>
-              <option value="investigating">Investigating</option>
-              <option value="resolved">Resolved</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-foreground">Sort By</label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="timestamp">Date</option>
-              <option value="riskLevel">Risk Level</option>
-              <option value="id">Alert ID</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Active Filters */}
-        {(filterType || filterRisk || filterStatus || searchQuery) && (
-          <div className="flex flex-wrap gap-2">
-            {searchQuery && (
-              <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">
-                Search: {searchQuery}
-                <button onClick={() => setSearchQuery('')} className="hover:opacity-70">
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            )}
-            {filterType && (
-              <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">
-                Type: {filterType.replace(/_/g, ' ')}
-                <button onClick={() => setFilterType(null)} className="hover:opacity-70">
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            )}
-            {filterRisk && (
-              <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">
-                Risk: {filterRisk}
-                <button onClick={() => setFilterRisk(null)} className="hover:opacity-70">
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            )}
-            {filterStatus && (
-              <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">
-                Status: {filterStatus}
-                <button onClick={() => setFilterStatus(null)} className="hover:opacity-70">
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            )}
-          </div>
-        )}
+        
       </div>
 
       {/* Alerts Table */}
@@ -242,7 +114,9 @@ export default function Alerts() {
                     <td className="px-6 py-4 font-medium text-primary cursor-pointer hover:underline" onClick={() => setSelectedAlert(alert)}>
                       {alert.id}
                     </td>
-                    <td className="px-6 py-4 text-foreground">{alert.user}</td>
+                    <td className="px-6 py-4 font-medium text-foreground">
+                      {alert.username}
+                    </td>
                     <td className="px-6 py-4 text-foreground capitalize">Fake Account</td>
                     <td className="px-6 py-4 text-muted-foreground text-xs">
                       {new Date(alert.createdAt).toLocaleDateString()}{" "}
@@ -266,20 +140,9 @@ export default function Alerts() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <select
-                        value={alertStatuses[alert.id]}
-                        onChange={(e) => updateAlertStatus(alert.id, e.target.value)}
-                        className={cn(
-                          'rounded-full px-3 py-1 text-xs font-medium border-none cursor-pointer',
-                          alertStatuses[alert.id] === 'open' && 'bg-blue-100 text-blue-700',
-                          alertStatuses[alert.id] === 'investigating' && 'bg-purple-100 text-purple-700',
-                          alertStatuses[alert.id] === 'resolved' && 'bg-green-100 text-green-700'
-                        )}
-                      >
-                        <option value="open">Open</option>
-                        <option value="investigating">Investigating</option>
-                        <option value="resolved">Resolved</option>
-                      </select>
+                      <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
+                        {alert.status}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <Button

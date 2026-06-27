@@ -1,3 +1,4 @@
+import { getCyberbullyingCases } from "./routes/cyberbullying";
 import { getActivityLogs } from "./routes/activityLogs";
 import "dotenv/config";
 import express from "express";
@@ -80,6 +81,7 @@ app.get(
 
   app.get("/api/fake-accounts", getFakeAccounts);
   app.get("/api/activity-logs", getActivityLogs);
+  app.get("/api/cyberbullying", getCyberbullyingCases);
 
   return app;
 }

@@ -1,25 +1,30 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Search, X, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { mockCyberbullyingCases } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function Cyberbullying() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterSeverity, setFilterSeverity] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCase, setSelectedCase] = useState<any>(null);
+  const [cases, setCases] = useState<any[]>([]);
 
-  let filtered = mockCyberbullyingCases.filter(
+  useEffect(() => {
+    fetch("/api/cyberbullying")
+      .then((res) => res.json())
+      .then((data) => {
+        setCases(data);
+      })
+      .catch((err) => console.error(err));
+  }, []);
+
+  let filtered = cases.filter(
     case_ => case_.targetUsername.toLowerCase().includes(searchQuery.toLowerCase()) ||
              case_.message.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (filterSeverity) {
-    filtered = filtered.filter(case_ => case_.severity === filterSeverity);
-  }
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -38,55 +43,24 @@ export default function Cyberbullying() {
         <p className="mt-2 text-muted-foreground">Monitor and respond to harassment cases</p>
       </div>
 
-      {/* Search and Filter */}
-      <div className="rounded-lg border border-border bg-white p-6 space-y-4">
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search by username or message..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full rounded-lg border border-input bg-background py-2 pl-10 pr-4 text-sm transition-colors placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium text-foreground">Severity</label>
-            <select
-              value={filterSeverity || ''}
-              onChange={(e) => {
-                setFilterSeverity(e.target.value || null);
-                setCurrentPage(1);
-              }}
-              className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="">All Severity Levels</option>
-              <option value="mild">Mild</option>
-              <option value="moderate">Moderate</option>
-              <option value="severe">Severe</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-foreground">Status</label>
-            <select
-              defaultValue="all"
-              className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="all">All Statuses</option>
-              <option value="new">New</option>
-              <option value="reviewing">Reviewing</option>
-              <option value="resolved">Resolved</option>
-            </select>
-          </div>
+    {/* Search */}
+    <div className="rounded-lg border border-border bg-white p-6">
+      <div className="flex gap-4">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search by username or message..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full rounded-lg border border-input bg-background py-2 pl-10 pr-4 text-sm transition-colors placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          />
         </div>
       </div>
+    </div>
 
       {/* Cases Table */}
       <div className="rounded-lg border border-border bg-white overflow-hidden">
@@ -114,7 +88,7 @@ export default function Cyberbullying() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-muted-foreground text-xs">
-                    {case_.timestamp.toLocaleDateString()}
+                    {new Date(case_.timestamp).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4">
                     <Button size="sm" variant="outline" onClick={() => setSelectedCase(case_)}>
@@ -173,7 +147,7 @@ export default function Cyberbullying() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">Date</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{selectedCase.timestamp.toLocaleDateString()}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{new Date(selectedCase.timestamp).toLocaleDateString()}</p>
                 </div>
               </div>
 
