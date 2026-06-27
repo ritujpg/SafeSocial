@@ -14,7 +14,7 @@ export default function Alerts() {
   const [sortBy, setSortBy] = useState('timestamp');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
+  const [selectedAlert, setSelectedAlert] = useState<any>(null);
   const [alertStatuses, setAlertStatuses] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -54,9 +54,9 @@ export default function Alerts() {
 
   // Sort alerts
   filtered.sort((a, b) => {
-    let aVal: any = a[sortBy as keyof Alert];
-    let bVal: any = b[sortBy as keyof Alert];
-
+    let aVal: any = a[sortBy as keyof typeof a];
+    let bVal: any = b[sortBy as keyof typeof b];
+    
     if (sortBy === 'timestamp') {
       aVal = new Date(aVal).getTime();
       bVal = new Date(bVal).getTime();
