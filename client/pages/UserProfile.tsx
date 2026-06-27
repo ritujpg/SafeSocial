@@ -1,32 +1,43 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Mail, Calendar, Activity, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { mockUsers, mockAlerts, mockActivityLogs, mockInvestigationCases } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 
 export default function UserProfile() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
 
-  const user = mockUsers.find(u => u.id === userId);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+
+    if (!userId) return;
+
+    fetch(`/api/users/${userId}`)
+      .then((res) => res.json())
+      .then((data) => {
+
+        if (data.success) {
+          setUser(data.user);
+        }
+
+      })
+      .catch(console.error);
+
+  }, [userId]);
 
   if (!user) {
     return (
-      <div className="space-y-6 p-8">
-        <Button onClick={() => navigate('/user-management')} variant="outline" className="gap-2">
-          <ArrowLeft className="h-4 w-4" />
-          Back to Users
-        </Button>
-        <div className="rounded-lg border border-border bg-white p-8 text-center">
-          <p className="text-foreground font-medium">User not found</p>
-        </div>
+      <div className="p-8">
+        <p>Loading...</p>
       </div>
     );
   }
 
-  const userAlerts = mockAlerts.filter(a => a.user === user.fullName);
-  const userActivities = mockActivityLogs.filter(a => a.userId === user.id);
-  const userInvestigations = mockInvestigationCases.filter(c => c.userId === user.id);
+  const userAlerts: any[] = [];
+  const userActivities: any[] = [];
+  const userInvestigations: any[] = [];
 
   const getRiskColor = (score: number) => {
     if (score >= 75) return 'bg-red-100 text-red-700 border-red-200';
@@ -79,7 +90,7 @@ export default function UserProfile() {
             <Calendar className="h-4 w-4 text-muted-foreground mt-1" />
             <div>
               <p className="text-xs text-muted-foreground mb-2">Joined</p>
-              <p className="text-sm font-medium text-foreground">{user.joinDate.toLocaleDateString()}</p>
+              <p className="text-sm font-medium text-foreground">{new Date(user.joined).toLocaleDateString()}</p>
             </div>
           </div>
           <div>
@@ -107,92 +118,8 @@ export default function UserProfile() {
         </div>
       </div>
 
-      {/* Related Alerts */}
-      {userAlerts.length > 0 && (
-        <div className="rounded-lg border border-border bg-white p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Alert History</h2>
-          <div className="space-y-3">
-            {userAlerts.map((alert) => (
-              <div key={alert.id} className="flex items-start gap-4 p-3 rounded-lg border border-border hover:bg-muted transition-colors">
-                <AlertCircle className={cn(
-                  'h-5 w-5 flex-shrink-0 mt-0.5',
-                  alert.riskLevel === 'critical' && 'text-red-500',
-                  alert.riskLevel === 'high' && 'text-orange-500',
-                  alert.riskLevel === 'medium' && 'text-yellow-500',
-                  alert.riskLevel === 'low' && 'text-green-500'
-                )} />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium text-foreground">{alert.id}</p>
-                    <span className={cn(
-                      'rounded-full px-2 py-1 text-xs font-medium',
-                      alert.riskLevel === 'critical' && 'bg-red-100 text-red-700',
-                      alert.riskLevel === 'high' && 'bg-orange-100 text-orange-700',
-                      alert.riskLevel === 'medium' && 'bg-yellow-100 text-yellow-700',
-                      alert.riskLevel === 'low' && 'bg-green-100 text-green-700'
-                    )}>
-                      {alert.riskLevel.toUpperCase()}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">{alert.description}</p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {alert.timestamp.toLocaleDateString()} {alert.timestamp.toLocaleTimeString()}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+    
 
-      {/* Activity Timeline */}
-      {userActivities.length > 0 && (
-        <div className="rounded-lg border border-border bg-white p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Recent Activities</h2>
-          <div className="space-y-3">
-            {userActivities.slice(0, 5).map((activity) => (
-              <div key={activity.id} className="flex items-start gap-4 p-3 rounded-lg border border-border">
-                <Activity className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="font-medium text-foreground">{activity.activity}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {activity.timestamp.toLocaleDateString()} {activity.timestamp.toLocaleTimeString()}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Investigation Records */}
-      {userInvestigations.length > 0 && (
-        <div className="rounded-lg border border-border bg-white p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Investigation Records</h2>
-          <div className="space-y-3">
-            {userInvestigations.map((investigation) => (
-              <div key={investigation.id} className="p-4 rounded-lg border border-border hover:bg-muted transition-colors">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-medium text-foreground">{investigation.id}</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {investigation.incidents.length} incidents detected
-                    </p>
-                  </div>
-                  <span className={cn(
-                    'rounded-full px-3 py-1 text-xs font-medium capitalize',
-                    investigation.status === 'active' && 'bg-orange-100 text-orange-700',
-                    investigation.status === 'open' && 'bg-blue-100 text-blue-700',
-                    investigation.status === 'closed' && 'bg-green-100 text-green-700'
-                  )}>
-                    {investigation.status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Risk Assessment */}
       <div className="rounded-lg border border-border bg-white p-6">
@@ -220,7 +147,10 @@ export default function UserProfile() {
             <div className="p-3 rounded-lg bg-muted">
               <p className="text-xs text-muted-foreground">Account Age</p>
               <p className="text-sm font-medium text-foreground mt-1">
-                {Math.floor((Date.now() - user.joinDate.getTime()) / (1000 * 60 * 60 * 24))} days
+                {Math.floor(
+                  (Date.now() - new Date(user.joined).getTime()) /
+                  (1000 * 60 * 60 * 24)
+                )} days
               </p>
             </div>
             <div className="p-3 rounded-lg bg-muted">

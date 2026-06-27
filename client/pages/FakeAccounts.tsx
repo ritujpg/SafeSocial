@@ -60,8 +60,8 @@ export default function FakeAccounts() {
               <div className="rounded-lg bg-red-100 px-3 py-1 text-right">
                 <p className="text-xs font-medium text-red-700">Risk</p>
                 <p className="text-lg font-bold text-red-700">
-                  {account.confidence_score
-                    ? `${Math.round(account.confidence_score)}%`
+                  {account.riskScore
+                    ? `${account.riskScore}%`
                     : "N/A"}
               </p>
               </div>
@@ -133,7 +133,9 @@ export default function FakeAccounts() {
                   <div className="rounded-lg bg-muted p-3">
                     <p className="text-xs text-muted-foreground">Created</p>
                     <p className="text-sm font-medium text-foreground mt-1">
-                      {selectedAccount.createdAt.toLocaleDateString()}
+                      {selectedAccount.createdAt
+                        ? new Date(selectedAccount.createdAt).toLocaleDateString()
+                        : "N/A"}
                     </p>
                   </div>
                   <div className="rounded-lg bg-muted p-3">

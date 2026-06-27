@@ -239,3 +239,63 @@ export const deleteUser: RequestHandler = async (
   }
 
 };
+
+export const getUserById: RequestHandler = async (
+  req,
+  res
+) => {
+  try {
+
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `
+      SELECT
+        id,
+        username,
+        display_name,
+        email,
+        risk_score,
+        risk_level,
+        status,
+        created_at
+      FROM users
+      WHERE id = $1;
+      `,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const user = result.rows[0];
+
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        fullName: user.display_name,
+        username: user.username,
+        email: user.email,
+        accountStatus: user.status,
+        riskScore: user.risk_score,
+        riskLevel: user.risk_level,
+        joined: user.created_at,
+      },
+    });
+
+  } catch (err: any) {
+
+    console.error(err);
+
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+
+  }
+};

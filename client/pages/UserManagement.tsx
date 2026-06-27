@@ -9,7 +9,6 @@ const ITEMS_PER_PAGE = 10;
 
 export default function UserManagement() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [users, setUsers] = useState<any[]>([]);
@@ -40,9 +39,7 @@ export default function UserManagement() {
     user.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (filterStatus) {
-    filtered = filtered.filter(user => user.accountStatus === filterStatus);
-  }
+  
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -135,22 +132,7 @@ export default function UserManagement() {
           </div>
         </div>
 
-        <div>
-          <label className="text-sm font-medium text-foreground">Account Status</label>
-          <select
-            value={filterStatus || ''}
-            onChange={(e) => {
-              setFilterStatus(e.target.value || null);
-              setCurrentPage(1);
-            }}
-            className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="suspended">Suspended</option>
-            <option value="flagged">Flagged</option>
-          </select>
-        </div>
+        
       </div>
 
       {/* Users Table */}
@@ -194,7 +176,16 @@ export default function UserManagement() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => { setEditingUser(user); setShowModal(true); }}
+                      onClick={() => {
+                        setEditingUser(user);
+
+                        setFullName(user.fullName || "");
+                        setUsername(user.username || "");
+                        setEmail(user.email || "");
+                        setStatus(user.accountStatus || "active");
+
+                        setShowModal(true);
+                      }}
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>

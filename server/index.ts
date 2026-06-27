@@ -10,6 +10,7 @@ import { handleDemo } from "./routes/demo";
 import { register, login } from "./routes/auth";
 import {
   getUsers,
+  getUserById,
   createUser,
   updateUser,
   deleteUser,
@@ -49,6 +50,7 @@ export function createServer() {
 
   // Users route
   app.get("/api/users", getUsers);
+  app.get("/api/users/:id", getUserById);
   app.post("/api/users", createUser);
   app.put("/api/users/:id", updateUser);
   app.delete("/api/users/:id", deleteUser);
