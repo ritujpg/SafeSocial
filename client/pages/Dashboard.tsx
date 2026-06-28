@@ -3,22 +3,36 @@ import { Link } from 'react-router-dom';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { ArrowUpRight, Users, AlertCircle, AlertTriangle, Image, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { dashboardStats, activityTrend, alertDistribution, mockAlerts } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 
 const StatCard = ({ label, value, icon: Icon, color, onClick }: any) => (
   <button
     onClick={onClick}
-    className="rounded-lg border border-border bg-white p-6 text-left transition-all hover:shadow-md hover:border-primary"
+    className="h-full rounded-xl border border-border bg-white p-6 text-left transition-all hover:border-primary hover:shadow-md"
   >
-    <div className="flex items-start justify-between">
-      <div>
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="mt-2 text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
+    <div className="flex items-center justify-between gap-6">
+
+      <div className="flex-1">
+
+        <p className="text-sm font-medium text-muted-foreground">
+          {label}
+        </p>
+
+        <p className="mt-4 text-4xl font-bold text-foreground">
+          {value}
+        </p>
+
       </div>
-      <div className={cn('rounded-lg p-2', color)}>
-        <Icon className="h-5 w-5 text-white" />
+
+      <div
+        className={cn(
+          "flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl",
+          color
+        )}
+      >
+        <Icon className="h-7 w-7 text-white" />
       </div>
+
     </div>
   </button>
 );
@@ -26,23 +40,53 @@ const StatCard = ({ label, value, icon: Icon, color, onClick }: any) => (
 const colors = ['#4A90E2', '#14B8A6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 
 export default function Dashboard() {
-  const [selectedAlert, setSelectedAlert] = useState<any>(null);
-  const [stats, setStats] = useState({
-    totalReports: 0,
-    pendingReports: 0,
-    investigatingReports: 0,
-    resolvedReports: 0,
-  });
-  useEffect(() => {
-  fetch("/api/dashboard/stats")
-    .then((res) => res.json())
-    .then((data) => {
-      setStats(data.stats);
-    })
-    .catch((err) => console.error(err));
-}, []);
 
-  const recentAlerts = mockAlerts.slice(0, 5);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    fakeAccounts: 0,
+    cyberbullyingCases: 0,
+    threatCases: 0,
+    imageMisuseCases: 0,
+    highRiskUsers: 0,
+  });
+
+  const [activityTrend, setActivityTrend] = useState<any[]>([]);
+
+  const [alertDistribution, setAlertDistribution] =
+    useState<any[]>([]);
+
+
+  useEffect(() => {
+
+    fetch("/api/dashboard/stats")
+
+      .then((res) => res.json())
+
+      .then((data) => {
+
+        if (!data.success) return;
+
+        setStats(data.stats);
+
+        setActivityTrend(
+          data.activityTrend || []
+        );
+
+        setAlertDistribution(
+          data.alertDistribution || []
+        );
+
+        console.log(
+          "Dashboard Analytics:",
+          data
+        );
+
+      })
+
+      .catch(console.error);
+
+  }, []);
+
 
   return (
     <div className="space-y-6 md:space-y-8 p-4 md:p-8">
@@ -53,55 +97,62 @@ export default function Dashboard() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-        <Link to="/activity-logs">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+
+        <Link to="/activity-logs" className="block w-full">
           <StatCard
             label="Total Users Monitored"
-            value={stats.totalReports}
+            value={stats.totalUsers}
             icon={Users}
             color="bg-blue-500"
           />
         </Link>
-        <Link to="/fake-accounts">
+
+        <Link to="/fake-accounts" className="block w-full">
           <StatCard
             label="Fake Accounts Detected"
-            value={stats.pendingReports}
+            value={stats.fakeAccounts}
             icon={AlertCircle}
             color="bg-amber-500"
           />
         </Link>
-        <Link to="/cyberbullying">
+
+        <Link to="/cyberbullying" className="block w-full">
           <StatCard
             label="Harassment Cases"
-            value={stats.investigatingReports}
+            value={stats.cyberbullyingCases}
             icon={AlertCircle}
             color="bg-orange-500"
           />
         </Link>
-        <Link to="/threats">
+
+        <Link to="/threats" className="block w-full">
           <StatCard
             label="Threat Alerts"
-            value={stats.resolvedReports}
+            value={stats.threatCases}
             icon={AlertTriangle}
             color="bg-red-500"
           />
         </Link>
-        <Link to="/image-misuse">
+
+        <Link to="/image-misuse" className="block w-full">
           <StatCard
             label="Image Misuse Cases"
-            value={0}
+            value={stats.imageMisuseCases}
             icon={Image}
             color="bg-teal-500"
           />
         </Link>
-        <Link to="/investigation">
+
+        <Link to="/investigation" className="block w-full">
           <StatCard
             label="High Risk Users"
-            value={0}
+            value={stats.highRiskUsers}
             icon={TrendingUp}
             color="bg-purple-500"
           />
         </Link>
+
       </div>
 
       {/* Charts Section */}
@@ -124,18 +175,28 @@ export default function Dashboard() {
         </div>
 
         {/* Alert Distribution Pie Chart */}
-        <div className="rounded-lg border border-border bg-white p-6">
+          <div className="rounded-lg border border-border bg-white p-6 min-w-[420px]">
           <h2 className="text-lg font-semibold text-foreground">Alert Distribution</h2>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={340}>
             <PieChart>
               <Pie
                 data={alertDistribution}
-                cx="50%"
+                cx="38%"
                 cy="50%"
-                labelLine={false}
-                label={(entry) => `${entry.type}`}
-                outerRadius={100}
-                fill="#8884d8"
+                outerRadius={90}
+                labelLine={true}
+                label={({ type, x, y, textAnchor }) => (
+                  <text
+                    x={x}
+                    y={y}
+                    textAnchor={textAnchor}
+                    dominantBaseline="central"
+                    fontSize={13}
+                    fill="#374151"
+                  >
+                    {type}
+                  </text>
+                )}
                 dataKey="value"
               >
                 {alertDistribution.map((entry, index) => (
@@ -143,65 +204,15 @@ export default function Dashboard() {
                 ))}
               </Pie>
               <Tooltip />
+
+              <Legend
+                layout="vertical"
+                verticalAlign="middle"
+                align="right"
+                iconType="circle"
+              />
             </PieChart>
           </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Recent Alerts */}
-      <div className="rounded-lg border border-border bg-white p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Recent Alerts</h2>
-          <Link to="/alerts">
-            <Button variant="outline" size="sm">View All Alerts</Button>
-          </Link>
-        </div>
-        <div className="overflow-x-auto -mx-6 md:mx-0">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="px-4 py-3 text-left font-medium text-foreground">Alert ID</th>
-                <th className="px-4 py-3 text-left font-medium text-foreground">User</th>
-                <th className="px-4 py-3 text-left font-medium text-foreground">Type</th>
-                <th className="px-4 py-3 text-left font-medium text-foreground">Time</th>
-                <th className="px-4 py-3 text-left font-medium text-foreground">Risk Level</th>
-                <th className="px-4 py-3 text-left font-medium text-foreground">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentAlerts.map((alert) => (
-                <tr key={alert.id} className="border-b border-border hover:bg-muted transition-colors">
-                  <td className="px-4 py-3 font-medium text-primary">{alert.id}</td>
-                  <td className="px-4 py-3 text-foreground">{alert.user}</td>
-                  <td className="px-4 py-3 text-foreground capitalize">{alert.type.replace(/_/g, ' ')}</td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {alert.timestamp.toLocaleDateString()} {alert.timestamp.toLocaleTimeString()}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={cn(
-                      'rounded-full px-3 py-1 text-xs font-medium',
-                      alert.riskLevel === 'critical' && 'bg-red-100 text-red-700',
-                      alert.riskLevel === 'high' && 'bg-orange-100 text-orange-700',
-                      alert.riskLevel === 'medium' && 'bg-yellow-100 text-yellow-700',
-                      alert.riskLevel === 'low' && 'bg-green-100 text-green-700'
-                    )}>
-                      {alert.riskLevel.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={cn(
-                      'rounded-full px-3 py-1 text-xs font-medium',
-                      alert.status === 'open' && 'bg-blue-100 text-blue-700',
-                      alert.status === 'investigating' && 'bg-purple-100 text-purple-700',
-                      alert.status === 'resolved' && 'bg-green-100 text-green-700'
-                    )}>
-                      {alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
 
