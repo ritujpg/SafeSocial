@@ -5,5 +5,12 @@
     "email": "admin@safesocial.com",
     "password": "admin123",
     "fullName": "John Admin"
+  },
+  {
+    "id": "USR-1782631602694",
+    "username": "ritu.r",
+    "email": "ritratn@gmail.com",
+    "password": "123456",
+    "fullName": "ritu"
   }
 ]

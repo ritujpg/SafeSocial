@@ -61,19 +61,24 @@ const alertStats = [
 ];
 
 useEffect(() => {
-  fetch("/api/reports/monthly")
+  fetch(`/api/reports/monthly?range=${dateRange}`)
     .then((res) => res.json())
     .then((data) => {
       setMonthlyData(data.monthlyData);
     });
-}, []);
+}, [dateRange]);
 
 useEffect(() => {
   fetch("/api/dashboard/analytics")
     .then((res) => res.json())
     .then((data) => {
-      setAnalytics(data.analytics);
-    });
+      console.log("Dashboard Analytics:", data);
+
+      if (data.analytics) {
+        setAnalytics(data.analytics);
+      }
+    })
+    .catch(console.error);
 }, []);
 
 useEffect(() => {

@@ -25,6 +25,10 @@ import {
 } from "./routes/reports";
 import {getMonthlyAnalytics } from "./routes/monthlyAnalytics";
 import { exportCsv } from "./routes/exportCsv";
+import {
+  getInvestigations,
+  createInvestigation,
+} from "./routes/investigations";
 
 
 
@@ -82,6 +86,8 @@ app.get(
   app.get("/api/fake-accounts", getFakeAccounts);
   app.get("/api/activity-logs", getActivityLogs);
   app.get("/api/cyberbullying", getCyberbullyingCases);
+  app.get("/api/investigations", getInvestigations);
+  app.post("/api/investigations", createInvestigation);
 
   return app;
 }
