@@ -1,0 +1,24 @@
+[
+  {
+    "id": "USR-001",
+    "username": "john_doe",
+    "accountAge": 365,
+    "posts": 120,
+    "followers": 500,
+    "following": 250,
+    "reports": 0,
+    "profileCompletion": 95,
+    "isFake": 0
+  },
+  {   
+    "id": "USR-002",
+    "username": "free_money123",
+    "accountAge": 5,
+    "posts": 1,
+    "followers": 3,
+    "following": 1200,
+    "reports": 8,
+    "profileCompletion": 20,
+    "isFake": 1
+  }
+]
