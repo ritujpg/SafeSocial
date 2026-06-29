@@ -34,5 +34,14 @@
     "reportedBy": "SafeSocial User",
     "status": "Pending",
     "createdAt": "2026-06-12T12:17:38.108Z"
+  },
+  {
+    "id": "RPT-1782713191774",
+    "type": "Threat",
+    "title": "hi",
+    "description": "dk",
+    "reportedBy": "SafeSocial User",
+    "status": "Pending",
+    "createdAt": "2026-06-29T06:06:31.774Z"
   }
 ]

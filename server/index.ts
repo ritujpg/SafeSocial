@@ -29,6 +29,7 @@ import {
   getInvestigations,
   createInvestigation,
 } from "./routes/investigations";
+import { getThreats } from "./routes/threats";
 
 
 
@@ -88,6 +89,7 @@ app.get(
   app.get("/api/cyberbullying", getCyberbullyingCases);
   app.get("/api/investigations", getInvestigations);
   app.post("/api/investigations", createInvestigation);
+  app.get("/api/threats", getThreats);
 
   return app;
 }

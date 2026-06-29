@@ -1,200 +1,475 @@
-import { useState } from 'react';
-import { Search, X, AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { mockThreatAlerts } from '@/lib/mock-data';
-import { cn } from '@/lib/utils';
+import { useState, useEffect } from "react";
+import { Search, X, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const ITEMS_PER_PAGE = 10;
 
-export default function Threats() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterSeverity, setFilterSeverity] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedThreat, setSelectedThreat] = useState<any>(null);
+interface ThreatCase {
+  id: string;
+  sender: string;
+  receiver: string;
+  message_text: string;
+  threat_type: string;
+  confidence_score: number;
+  severity: string;
+  status: string;
+  created_at: string;
+}
 
-  let filtered = mockThreatAlerts.filter(
-    threat => threat.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              threat.threatText.toLowerCase().includes(searchQuery.toLowerCase())
+export default function Threats() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [selectedThreat, setSelectedThreat] =
+    useState<ThreatCase | null>(null);
+
+  const [threats, setThreats] =
+    useState<ThreatCase[]>([]);
+
+  useEffect(() => {
+    fetch("/api/threats")
+      .then((res) => res.json())
+      .then((data) => {
+        setThreats(data);
+      })
+      .catch(console.error);
+  }, []);
+
+  const filtered = threats.filter((threat) => {
+    const search = searchQuery.toLowerCase();
+
+    return (
+      threat.sender.toLowerCase().includes(search) ||
+      threat.receiver.toLowerCase().includes(search) ||
+      threat.message_text.toLowerCase().includes(search) ||
+      threat.threat_type.toLowerCase().includes(search)
+    );
+  });
+
+  const totalPages = Math.ceil(
+    filtered.length / ITEMS_PER_PAGE
   );
 
-  if (filterSeverity) {
-    filtered = filtered.filter(threat => threat.severity === filterSeverity);
-  }
+  const paginated = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const getSeverityColor = (
+    severity: string
+  ) => {
+    if (severity === "critical")
+      return "bg-red-100 text-red-700";
 
-  const getSeverityColor = (severity: string) => {
-    if (severity === 'critical') return 'bg-red-100 text-red-700';
-    if (severity === 'high') return 'bg-orange-100 text-orange-700';
-    if (severity === 'medium') return 'bg-yellow-100 text-yellow-700';
-    return 'bg-green-100 text-green-700';
+    if (severity === "high")
+      return "bg-orange-100 text-orange-700";
+
+    if (severity === "medium")
+      return "bg-yellow-100 text-yellow-700";
+
+    return "bg-green-100 text-green-700";
   };
 
   return (
     <div className="space-y-6 p-8">
+
       {/* Header */}
+
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Threat Detection</h1>
-        <p className="mt-2 text-muted-foreground">Monitor and escalate threat alerts</p>
+
+        <h1 className="text-3xl font-bold text-foreground">
+          Threat Detection
+        </h1>
+
+        <p className="mt-2 text-muted-foreground">
+          Review AI detected threat messages.
+        </p>
+
       </div>
 
-      {/* Search and Filter */}
-      <div className="rounded-lg border border-border bg-white p-6 space-y-4">
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search threats..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full rounded-lg border border-input bg-background py-2 pl-10 pr-4 text-sm transition-colors placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
-        </div>
+      {/* Search */}
 
-        <div>
-          <label className="text-sm font-medium text-foreground">Severity</label>
-          <select
-            value={filterSeverity || ''}
+      <div className="rounded-lg border border-border bg-white p-6">
+
+        <div className="relative">
+
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+          <input
+            value={searchQuery}
             onChange={(e) => {
-              setFilterSeverity(e.target.value || null);
+              setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
-            className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option value="">All Severity Levels</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="critical">Critical</option>
-          </select>
+            placeholder="Search threats..."
+            className="w-full rounded-lg border border-input bg-background py-2 pl-10 pr-4 text-sm"
+          />
+
         </div>
+
       </div>
 
-      {/* Threats Table */}
-      <div className="rounded-lg border border-border bg-white overflow-hidden">
+      {/* Threat Table */}
+
+      <div className="overflow-hidden rounded-lg border border-border bg-white">
+
         <div className="overflow-x-auto">
+
           <table className="w-full text-sm">
+
             <thead className="border-b border-border bg-muted">
+
               <tr>
-                <th className="px-6 py-3 text-left font-medium text-foreground">Alert ID</th>
-                <th className="px-6 py-3 text-left font-medium text-foreground">User</th>
-                <th className="px-6 py-3 text-left font-medium text-foreground">Threat Text</th>
-                <th className="px-6 py-3 text-left font-medium text-foreground">Severity</th>
-                <th className="px-6 py-3 text-left font-medium text-foreground">Date</th>
-                <th className="px-6 py-3 text-left font-medium text-foreground">Action</th>
+
+                <th className="px-6 py-3 text-left">
+                  Threat ID
+                </th>
+
+                <th className="px-6 py-3 text-left">
+                  Sender
+                </th>
+
+                <th className="px-6 py-3 text-left">
+                  Receiver
+                </th>
+
+                <th className="px-6 py-3 text-left">
+                  Threat Type
+                </th>
+
+                <th className="px-6 py-3 text-left">
+                  Severity
+                </th>
+
+                <th className="px-6 py-3 text-left">
+                  Action
+                </th>
+
               </tr>
+
             </thead>
-            <tbody>
-              {paginated.map((threat) => (
-                <tr key={threat.id} className="border-b border-border hover:bg-muted transition-colors">
-                  <td className="px-6 py-4 font-medium text-primary">{threat.id}</td>
-                  <td className="px-6 py-4 text-foreground">{threat.username}</td>
-                  <td className="px-6 py-4 text-foreground truncate max-w-xs">{threat.threatText}</td>
-                  <td className="px-6 py-4">
-                    <span className={cn('rounded-full px-3 py-1 text-xs font-medium', getSeverityColor(threat.severity))}>
-                      {threat.severity.toUpperCase()}
-                    </span>
+
+            <tbody>              {paginated.length === 0 ? (
+
+                <tr>
+
+                  <td
+                    colSpan={6}
+                    className="py-10 text-center text-muted-foreground"
+                  >
+                    No threats found.
                   </td>
-                  <td className="px-6 py-4 text-muted-foreground text-xs">
-                    {threat.timestamp.toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4">
-                    <Button size="sm" variant="outline" onClick={() => setSelectedThreat(threat)}>
-                      View
-                    </Button>
-                  </td>
+
                 </tr>
-              ))}
+
+              ) : (
+
+                paginated.map((threat) => (
+
+                  <tr
+                    key={threat.id}
+                    className="border-b border-border transition-colors hover:bg-muted"
+                  >
+
+                    <td className="px-6 py-4 font-medium text-primary">
+                      {threat.id}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      {threat.sender}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      {threat.receiver}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      {threat.threat_type}
+                    </td>
+
+                    <td className="px-6 py-4">
+
+                      <span
+                        className={cn(
+                          "rounded-full px-3 py-1 text-xs font-medium",
+                          getSeverityColor(
+                            threat.severity
+                          )
+                        )}
+                      >
+                        {threat.severity.toUpperCase()}
+                      </span>
+
+                    </td>
+
+                    <td className="px-6 py-4">
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          setSelectedThreat(threat)
+                        }
+                      >
+                        View
+                      </Button>
+
+                    </td>
+
+                  </tr>
+
+                ))
+
+              )}
+
             </tbody>
+
           </table>
+
         </div>
 
         {totalPages > 1 && (
-          <div className="border-t border-border px-6 py-4 flex items-center justify-between">
+
+          <div className="flex items-center justify-between border-t border-border px-6 py-4">
+
             <p className="text-sm text-muted-foreground">
-              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length}
+
+              Showing{" "}
+
+              {(currentPage - 1) *
+                ITEMS_PER_PAGE +
+                1}
+
+              {" "}to{" "}
+
+              {Math.min(
+                currentPage *
+                  ITEMS_PER_PAGE,
+                filtered.length
+              )}
+
+              {" "}of{" "}
+
+              {filtered.length}
+
             </p>
+
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1}>
+
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === 1}
+                onClick={() =>
+                  setCurrentPage(
+                    currentPage - 1
+                  )
+                }
+              >
                 Previous
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages}>
+
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={
+                  currentPage ===
+                  totalPages
+                }
+                onClick={() =>
+                  setCurrentPage(
+                    currentPage + 1
+                  )
+                }
+              >
                 Next
               </Button>
+
             </div>
+
           </div>
+
         )}
+
       </div>
 
       {/* Threat Details Modal */}
-      {selectedThreat && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="max-h-96 w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6">
-            <div className="mb-4 flex items-start justify-between">
+
+      {selectedThreat && (        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl">
+
+            <div className="mb-6 flex items-center justify-between">
+
               <div>
-                <h2 className="text-2xl font-bold text-foreground">{selectedThreat.id}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">User: {selectedThreat.username}</p>
+
+                <h2 className="text-2xl font-bold">
+                  Threat Details
+                </h2>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {selectedThreat.id}
+                </p>
+
               </div>
-              <button onClick={() => setSelectedThreat(null)} className="text-muted-foreground hover:text-foreground">
-                <X className="h-6 w-6" />
+
+              <button
+                onClick={() =>
+                  setSelectedThreat(null)
+                }
+              >
+                <X className="h-6 w-6 text-muted-foreground hover:text-foreground" />
               </button>
+
             </div>
 
-            <div className="space-y-4 border-t border-border pt-4">
+            <div className="space-y-5">
+
               <div>
-                <p className="text-sm font-medium text-foreground">Threat Text</p>
-                <p className="mt-2 rounded-lg bg-red-50 p-3 text-sm text-foreground border border-red-200">
-                  "{selectedThreat.threatText}"
+
+                <p className="text-sm text-muted-foreground">
+                  Sender
                 </p>
+
+                <p className="font-medium">
+                  {selectedThreat.sender}
+                </p>
+
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div>
+
+                <p className="text-sm text-muted-foreground">
+                  Receiver
+                </p>
+
+                <p className="font-medium">
+                  {selectedThreat.receiver}
+                </p>
+
+              </div>
+
+              <div>
+
+                <p className="text-sm text-muted-foreground">
+                  Threat Message
+                </p>
+
+                <div className="mt-2 rounded-lg border bg-red-50 p-4">
+
+                  <p className="text-sm">
+                    {selectedThreat.message_text}
+                  </p>
+
+                </div>
+
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+
                 <div>
-                  <p className="text-sm font-medium text-foreground">Severity</p>
-                  <span className={cn('mt-1 inline-block rounded-full px-3 py-1 text-xs font-medium', getSeverityColor(selectedThreat.severity))}>
+
+                  <p className="text-sm text-muted-foreground">
+                    Threat Type
+                  </p>
+
+                  <p className="font-medium">
+                    {selectedThreat.threat_type}
+                  </p>
+
+                </div>
+
+                <div>
+
+                  <p className="text-sm text-muted-foreground">
+                    Confidence
+                  </p>
+
+                  <p className="font-medium">
+                    {selectedThreat.confidence_score}%
+                  </p>
+
+                </div>
+
+                <div>
+
+                  <p className="text-sm text-muted-foreground">
+                    Severity
+                  </p>
+
+                  <span
+                    className={cn(
+                      "mt-1 inline-block rounded-full px-3 py-1 text-xs font-medium",
+                      getSeverityColor(
+                        selectedThreat.severity
+                      )
+                    )}
+                  >
                     {selectedThreat.severity.toUpperCase()}
                   </span>
+
                 </div>
+
                 <div>
-                  <p className="text-sm font-medium text-foreground">Status</p>
-                  <p className="mt-1 text-sm text-muted-foreground capitalize">{selectedThreat.status}</p>
+
+                  <p className="text-sm text-muted-foreground">
+                    Status
+                  </p>
+
+                  <p className="font-medium">
+                    {selectedThreat.status}
+                  </p>
+
                 </div>
+
               </div>
 
               <div>
-                <p className="text-sm font-medium text-foreground mb-2">Detected Keywords</p>
-                <div className="flex flex-wrap gap-2">
-                  {selectedThreat.keywords.map((keyword: string, i: number) => (
-                    <span key={i} className="rounded-full bg-red-100 px-3 py-1 text-xs text-red-700">
-                      {keyword}
-                    </span>
-                  ))}
-                </div>
+
+                <p className="text-sm text-muted-foreground">
+                  Detected On
+                </p>
+
+                <p className="font-medium">
+                  {new Date(
+                    selectedThreat.created_at
+                  ).toLocaleString()}
+                </p>
+
               </div>
 
-              {selectedThreat.targetInfo && (
-                <div>
-                  <p className="text-sm font-medium text-foreground">Target Information</p>
-                  <p className="mt-1 rounded-lg bg-orange-50 p-3 text-sm text-foreground border border-orange-200">
-                    {selectedThreat.targetInfo}
-                  </p>
-                </div>
-              )}
             </div>
 
-            <div className="mt-6 flex gap-3 border-t border-border pt-4">
-              <Button className="flex-1 bg-red-600 hover:bg-red-700">Escalate to Law Enforcement</Button>
-              <Button variant="outline" className="flex-1" onClick={() => setSelectedThreat(null)}>Close</Button>
+            <div className="mt-8 flex gap-3">
+
+              <Button
+                className="flex-1 bg-red-600 hover:bg-red-700"
+              >
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                Escalate Case
+              </Button>
+
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() =>
+                  setSelectedThreat(null)
+                }
+              >
+                Close
+              </Button>
+
             </div>
+
           </div>
+
         </div>
+
       )}
+
     </div>
+
   );
+
 }
