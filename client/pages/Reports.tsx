@@ -22,14 +22,22 @@ export default function Reports() {
 
   const [title, setTitle] = useState("");
 
-  const [type, setType] =
-    useState("Threat");
+  
 
   const [reportedUser, setReportedUser] =
     useState("");
 
   const [description, setDescription] =
     useState("");
+
+  const [message, setMessage] =
+    useState("");
+
+  const [profileUrl, setProfileUrl] =
+    useState("");
+
+  const [screenshot, setScreenshot] =
+    useState<File | null>(null);
 
   useEffect(() => {
     fetch("/api/reports")
@@ -271,8 +279,9 @@ export default function Reports() {
 
                     <span>
 
-                      <strong>Category:</strong>{" "}
-                      {report.type}
+                      <strong>AI Status:</strong>{" "}
+
+                      {report.ai_status || "Pending Analysis"}
 
                     </span>
 
@@ -391,15 +400,45 @@ export default function Reports() {
 
               </div>
 
+             <div>
+
+                <p className="text-sm text-muted-foreground">
+                  AI Status
+                </p>
+
+                <p className="font-medium">
+
+                  {selectedReport.ai_status || "Pending Analysis"}
+
+                </p>
+
+              </div>
+              
               <div>
 
                 <p className="text-sm text-muted-foreground">
-                  Category
+                  AI Result
+                </p>
+
+                <p className="font-medium">
+
+                  {selectedReport.ai_result || "Analyzing..."}
+
+                </p>
+
+              </div>
+
+              <div>
+
+                <p className="text-sm text-muted-foreground">
+                  Confidence
                 </p>
 
                 <p>
 
-                  {selectedReport.type}
+                  {selectedReport.confidence
+                    ? `${selectedReport.confidence}%`
+                    : "-"}
 
                 </p>
 
@@ -476,7 +515,7 @@ export default function Reports() {
 
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
 
-          <div className="w-full max-w-2xl rounded-xl bg-white p-8 shadow-xl">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-white p-8 shadow-xl">
 
             <div className="flex items-center justify-between">
 
@@ -506,18 +545,6 @@ export default function Reports() {
                 className="w-full rounded-lg border p-3"
               />
 
-              <select
-                value={type}
-                onChange={(e) =>
-                  setType(e.target.value)
-                }
-                className="w-full rounded-lg border p-3"
-              >
-                <option>Threat</option>
-                <option>Cyberbullying</option>
-                <option>Fake Account</option>
-                <option>Image Misuse</option>
-              </select>
 
               <input
                 value={reportedUser}
@@ -530,6 +557,25 @@ export default function Reports() {
                 className="w-full rounded-lg border p-3"
               />
 
+              <input
+                value={profileUrl}
+                onChange={(e) =>
+                  setProfileUrl(e.target.value)
+                }
+                placeholder="Profile URL (Optional)"
+                className="w-full rounded-lg border p-3"
+              />
+
+              <textarea
+                rows={4}
+                value={message}
+                onChange={(e) =>
+                  setMessage(e.target.value)
+                }
+                placeholder="Paste the message/comment (Optional)"
+                className="w-full rounded-lg border p-3"
+              />
+
               <textarea
                 rows={5}
                 value={description}
@@ -538,9 +584,34 @@ export default function Reports() {
                     e.target.value
                   )
                 }
-                placeholder="Describe the issue..."
+                placeholder="Paste the message or describe the issue..."
                 className="w-full rounded-lg border p-3"
               />
+
+              <div>
+
+                <label className="mb-2 block text-sm font-medium">
+
+                  Upload Screenshot (Optional)
+
+                </label>
+
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg"
+                  onChange={(e) => {
+
+                    if (e.target.files?.length) {
+
+                      setScreenshot(e.target.files[0]);
+
+                    }
+
+                  }}
+                  className="w-full rounded-lg border p-3"
+                />
+
+              </div>
 
               <div className="flex justify-end gap-3">
 
@@ -554,81 +625,94 @@ export default function Reports() {
                 </Button>
 
                 <Button
-                  onClick={async () => {
+                 onClick={async () => {
 
-                    const response =
-                      await fetch(
-                        "/api/reports",
-                        {
-                          method: "POST",
+                  // Validate evidence
+                  if (!message.trim() && !screenshot) {
 
-                          headers: {
-                            "Content-Type":
-                              "application/json",
-                          },
+                    alert(
+                      "Please provide either a message/comment or upload a screenshot."
+                    );
 
-                          body: JSON.stringify({
+                    return;
 
-                            title,
+                  }
 
-                            type,
+                  const response =
+                    await fetch(
+                      "/api/reports",
+                      {
+                        method: "POST",
 
-                            description,
+                        headers: {
+                          "Content-Type":
+                            "application/json",
+                        },
 
-                            reportedUser,
+                        body: JSON.stringify({
 
-                            reportedBy:
-                              "SafeSocial User",
+                          title,
 
-                          }),
+                          description,
+
+                          reportedUser,
+
+                          reportedBy:
+                            "SafeSocial User",
+
+                        }),
+
+                      }
+                    );
+
+                  const data =
+                    await response.json();
+
+                  if (data.success) {
+
+                    alert(
+                      "Report submitted successfully!"
+                    );
+
+                    setShowNewReport(false);
+
+                    setTitle("");
+
+                    setDescription("");
+
+                    setReportedUser("");
+
+                    setMessage("");
+
+                    setProfileUrl("");
+
+                    setScreenshot(null);
+
+                    fetch("/api/reports")
+                      .then((res) =>
+                        res.json()
+                      )
+                      .then((data) => {
+
+                        if (data.success) {
+
+                          setReports(
+                            data.reports
+                          );
 
                         }
-                      );
 
-                    const data =
-                      await response.json();
+                      });
 
-                    if (data.success) {
+                  } else {
 
-                      alert(
-                        "Report submitted successfully!"
-                      );
+                    alert(
+                      "Failed to submit report."
+                    );
 
-                      setShowNewReport(false);
+                  }
 
-                      setTitle("");
-
-                      setDescription("");
-
-                      setReportedUser("");
-
-                      setType("Threat");
-
-                      fetch("/api/reports")
-                        .then((res) =>
-                          res.json()
-                        )
-                        .then((data) => {
-
-                          if (data.success) {
-
-                            setReports(
-                              data.reports
-                            );
-
-                          }
-
-                        });
-
-                    } else {
-
-                      alert(
-                        "Failed to submit report."
-                      );
-
-                    }
-
-                  }}
+                }}
                 >
                   Submit Report
                 </Button>
