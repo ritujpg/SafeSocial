@@ -25,3 +25,13 @@ dist-ssr
 
 .config/
 !.env
+
+# ML Dataset
+server/ml/datasets/
+
+# Trained Models
+server/ml/models/
+
+# Python cache
+server/ml/__pycache__/
+*.pyc
