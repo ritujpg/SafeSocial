@@ -347,9 +347,9 @@ export default function Reports() {
 
       {selectedReport && (
 
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 p-6">
 
-          <div className="w-full max-w-2xl rounded-xl bg-white p-8 shadow-xl">
+          <div className="mx-auto my-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-white p-8 shadow-xl">
 
             <div className="flex items-center justify-between">
 
@@ -370,7 +370,7 @@ export default function Reports() {
 
             </div>
 
-            <div className="mt-8 space-y-5">
+            <div className="mt-6 space-y-4">
 
               <div>
 
@@ -461,6 +461,34 @@ export default function Reports() {
               <div>
 
                 <p className="text-sm text-muted-foreground">
+                  Profile URL
+                </p>
+
+                <p className="break-all">
+
+                  {selectedReport.profile_url || "-"}
+
+                </p>
+
+              </div>
+
+              <div>
+
+                <p className="text-sm text-muted-foreground">
+                  Message
+                </p>
+
+                <p className="whitespace-pre-wrap">
+
+                  {selectedReport.message || "-"}
+
+                </p>
+
+              </div>
+
+              <div>
+
+                <p className="text-sm text-muted-foreground">
                   Description
                 </p>
 
@@ -469,6 +497,28 @@ export default function Reports() {
                   {selectedReport.description}
 
                 </p>
+
+              </div>
+
+              <div>
+
+                <p className="text-sm text-muted-foreground">
+                  Screenshot
+                </p>
+
+                {selectedReport.screenshot_url ? (
+
+                  <img
+                    src={selectedReport.screenshot_url}
+                    alt="Evidence"
+                    className="mt-2 max-h-64 w-full rounded-lg border object-contain"
+                  />
+
+                ) : (
+
+                  <p>-</p>
+
+                )}
 
               </div>
 
@@ -513,9 +563,9 @@ export default function Reports() {
 
       {showNewReport && (
 
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 p-6">
 
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-white p-8 shadow-xl">
+          <div className="mx-auto my-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-white p-8 shadow-xl">
 
             <div className="flex items-center justify-between">
 
@@ -534,7 +584,7 @@ export default function Reports() {
 
             </div>
 
-            <div className="mt-8 space-y-5">
+            <div className="mt-6 space-y-4">
 
               <input
                 value={title}
@@ -653,9 +703,13 @@ export default function Reports() {
 
                           title,
 
-                          description,
-
                           reportedUser,
+
+                          profileUrl,
+
+                          message,
+
+                          description,
 
                           reportedBy:
                             "SafeSocial User",
