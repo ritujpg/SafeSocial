@@ -1,14 +1,14 @@
 import os
 import joblib
 import pandas as pd
-from imblearn.over_sampling import SMOTE
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.ensemble import RandomForestClassifier
 
 # ----------------------------------------------------
-# Load Dataset
+# Paths
 # ----------------------------------------------------
 
 BASE_DIR = os.path.dirname(__file__)
@@ -26,60 +26,44 @@ MODEL_DIR = os.path.join(
 
 os.makedirs(MODEL_DIR, exist_ok=True)
 
-print("Loading dataset...")
+# ----------------------------------------------------
+# Load Dataset
+# ----------------------------------------------------
+
+print("Loading Dataset...")
 
 df = pd.read_csv(DATASET_PATH)
 
 print(f"Dataset Loaded : {len(df)} rows")
 
 # ----------------------------------------------------
-# Keep only required columns
+# Keep Required Columns
 # ----------------------------------------------------
 
 df = df[
     [
         "comment_text",
-        "toxic",
-        "severe_toxic",
-        "obscene",
         "threat",
-        "insult",
-        "identity_hate",
     ]
 ]
 
 df = df.fillna("")
 
 # ----------------------------------------------------
-# Convert Dataset Labels
+# Binary Labels
 #
-# 0 -> Normal
-# 1 -> Cyberbullying
-# 2 -> Threat
+# 1 = Threat
+# 0 = Normal
 # ----------------------------------------------------
 
-def create_label(row):
+df["label"] = df["threat"]
 
-    if row["threat"] == 1 or row["severe_toxic"] == 1:
-        return "Threat"
+print("\nDataset Distribution\n")
 
-    if (
-        row["toxic"] == 1
-        or row["obscene"] == 1
-        or row["insult"] == 1
-        or row["identity_hate"] == 1
-    ):
-        return "Cyberbullying"
-
-    return "Normal"
-
-df["label"] = df.apply(create_label, axis=1)
-
-print("\nClass Distribution\n")
 print(df["label"].value_counts())
 
 # ----------------------------------------------------
-# Features & Labels
+# Features
 # ----------------------------------------------------
 
 X = df["comment_text"]
@@ -92,7 +76,7 @@ y = df["label"]
 
 vectorizer = TfidfVectorizer(
     stop_words="english",
-    max_features=15000,
+    max_features=8000,
     ngram_range=(1, 2),
     min_df=2
 )
@@ -110,25 +94,11 @@ X_train, X_test, y_train, y_test = train_test_split(
     random_state=42,
     stratify=y,
 )
-
-print("\nApplying SMOTE...")
-
-smote = SMOTE(random_state=42)
-
-X_train, y_train = smote.fit_resample(
-    X_train,
-    y_train
-)
-
-print("SMOTE Applied Successfully!")
-
-print("\nBalanced Dataset\n")
-print(pd.Series(y_train).value_counts())
 # ----------------------------------------------------
 # Train Random Forest
 # ----------------------------------------------------
 
-print("\nTraining Random Forest Model...\n")
+print("\nTraining Threat Detection Random Forest...\n")
 
 model = RandomForestClassifier(
     n_estimators=100,
@@ -137,7 +107,10 @@ model = RandomForestClassifier(
     n_jobs=-1
 )
 
-model.fit(X_train, y_train)
+model.fit(
+    X_train,
+    y_train
+)
 
 print("Model Training Complete!")
 
@@ -145,18 +118,25 @@ print("Model Training Complete!")
 # Evaluate Model
 # ----------------------------------------------------
 
-accuracy = model.score(X_test, y_test)
 predictions = model.predict(X_test)
 
 print("\nClassification Report\n")
 
-print(classification_report(
-    y_test,
-    predictions
-))
+print(
+    classification_report(
+        y_test,
+        predictions,
+        target_names=["Normal", "Threat"]
+    )
+)
+
+accuracy = model.score(
+    X_test,
+    y_test
+)
 
 print("\n===================================")
-print(f"Model Accuracy : {accuracy * 100:.2f}%")
+print(f"Model Accuracy : {accuracy*100:.2f}%")
 print("===================================\n")
 
 # ----------------------------------------------------
@@ -165,37 +145,43 @@ print("===================================\n")
 
 MODEL_PATH = os.path.join(
     MODEL_DIR,
-    "random_forest_model.pkl"
+    "threat_rf.pkl"
 )
 
 VECTORIZER_PATH = os.path.join(
     MODEL_DIR,
-    "tfidf_vectorizer.pkl"
+    "threat_vectorizer.pkl"
 )
 
 joblib.dump(model, MODEL_PATH)
 
 joblib.dump(vectorizer, VECTORIZER_PATH)
 
-print("Random Forest Model Saved")
+print("Threat Detection Model Saved!")
 
-print("TF-IDF Vectorizer Saved")
+joblib.dump(vectorizer, VECTORIZER_PATH)
+
+print("Threat Vectorizer Saved!")
 
 # ----------------------------------------------------
-# Quick Test
+# Sample Predictions
 # ----------------------------------------------------
 
 sample_messages = [
 
     "Have a nice day!",
 
-    "You are an idiot and nobody likes you.",
+    "See you tomorrow.",
 
-    "I know where you live. I will kill you.",
+    "I know where you live.",
 
-    "You deserve to die.",
+    "I will kill you.",
 
-    "Thanks for helping me today."
+    "I'm coming for you tonight.",
+
+    "You better watch your back.",
+
+    "Thank you for your support."
 
 ]
 
@@ -207,9 +193,17 @@ for message in sample_messages:
 
     prediction = model.predict(vector)[0]
 
-    probability = model.predict_proba(vector).max() * 100
+    confidence = model.predict_proba(vector).max() * 100
+
+    label = (
+        "Threat"
+        if prediction == 1
+        else "Normal"
+    )
 
     print(f"Message     : {message}")
-    print(f"Prediction  : {prediction}")
-    print(f"Confidence  : {probability:.2f}%")
+    print(f"Prediction  : {label}")
+    print(f"Confidence  : {confidence:.2f}%")
     print("----------------------------------------")
+
+print("\nThreat Model Training Completed Successfully!")
