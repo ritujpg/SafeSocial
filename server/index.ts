@@ -20,6 +20,7 @@ import {
   createReport,
   getReports,
   updateReport,
+  deleteReport,
   getReportAnalytics,
   exportReportsPDF,
 } from "./routes/reports";
@@ -68,6 +69,10 @@ export function createServer() {
   getReportAnalytics
 );
   app.patch("/api/reports/:id", updateReport);
+  app.delete(
+    "/api/reports/:id",
+    deleteReport
+  );
   app.get(
   "/api/reports/monthly",
   getMonthlyAnalytics

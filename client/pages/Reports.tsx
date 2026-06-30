@@ -322,27 +322,64 @@ export default function Reports() {
                     {report.status}
                   </span>
 
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      setSelectedReport(report)
-                    }
-                  >
-                    View Details
-                  </Button>
+                  <div className="flex gap-2">
+
+                    <Button
+                      variant="outline"
+                      onClick={() => setSelectedReport(report)}
+                    >
+                      View Details
+                    </Button>
+
+                    <Button
+                      variant="destructive"
+                      onClick={async () => {
+
+                        const confirmDelete = window.confirm(
+                          "Delete this report?\n\nThis will remove it from your report history. Investigators will still retain a copy."
+                        );
+
+                        if (!confirmDelete) return;
+
+                        const response = await fetch(
+                          `/api/reports/${report.id}`,
+                          {
+                            method: "DELETE",
+                          }
+                        );
+
+                        const data = await response.json();
+
+                        if (data.success) {
+
+                          setReports((prev) =>
+                            prev.filter((r) => r.id !== report.id)
+                          );
+
+                        } else {
+
+                          alert("Failed to delete report.");
+
+                        }
+
+                      }}
+                    >
+                      Delete
+                    </Button>
+
+                  </div>
 
                 </div>
 
-              </div>
+                </div>
 
-            ))
+                )))}
 
-          )}
+                        </div>
 
-        </div>
+                      </div>
 
-      </div>
-
+              
       {/* View Details Modal */}
 
       {selectedReport && (

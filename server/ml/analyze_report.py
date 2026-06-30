@@ -84,6 +84,57 @@ THREAT_KEYWORDS = [
 ]
 
 # ------------------------
+# Fake Account Keywords
+# ------------------------
+
+FAKE_ACCOUNT_KEYWORDS = [
+
+    "fake account",
+    "fake profile",
+    "fake id",
+    "fake instagram",
+    "fake facebook",
+    "fake whatsapp",
+
+    "impersonating",
+    "impersonate",
+    "impersonation",
+
+    "pretending to be",
+    "claiming to be me",
+
+    "duplicate account",
+    "duplicate profile",
+    "cloned account",
+    "copied account",
+
+    "copied my profile",
+    "copied my account",
+    "using my pictures",
+    "using my photo",
+
+    "identity theft",
+    "identity fraud",
+
+    "catfish",
+    "scam account",
+    "fraud account",
+
+    "copying",
+    "copied",
+    "copy",
+    "pretend",
+    "pretending",
+    "impersonating",
+    "impersonation",
+    "trying to be me",
+    "posing as me",
+
+
+
+]
+
+# ------------------------
 # Clean Text
 # ------------------------
 
@@ -162,6 +213,7 @@ def analyze_message(message):
         cyber_model.predict_proba(cyber_features)[0]
     )
 
+
     # ------------------------
     # Keyword Detection
     # ------------------------
@@ -205,6 +257,36 @@ def analyze_message(message):
 
         }
 
+    # ------------------------
+    # Fake Account Detection
+    # ------------------------
+
+    fake_matches = []
+
+    cleaned_message = clean_text(message)
+
+    for keyword in FAKE_ACCOUNT_KEYWORDS:
+
+        if keyword in cleaned_message:
+
+            fake_matches.append(keyword)
+
+    if len(fake_matches) >= 1:
+
+        return {
+
+            "category": "Fake Account",
+
+            "confidence": 95.0,
+
+            "keywords": fake_matches
+
+        }
+
+    # ------------------------
+    # Cyberbullying
+    # ------------------------
+
     if cyber_prediction == 1:
 
         return {
@@ -238,7 +320,6 @@ def analyze_message(message):
         "keywords": []
 
     }
-
 
 # ------------------------
 # Main

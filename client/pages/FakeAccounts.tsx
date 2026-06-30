@@ -3,10 +3,36 @@ import { Search, X, Shield, TrendingUp, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+interface FakeAccount {
+
+  id: string;
+
+  reported_user: string;
+
+  title: string;
+
+  message: string;
+
+  description: string;
+
+  anomaly_score: number;
+
+  suspicion_reason: string;
+
+  severity: string;
+
+  status: string;
+
+  detected_at: string;
+
+}
+
 export default function FakeAccounts() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedAccount, setSelectedAccount] = useState<any>(null);
-  const [accounts, setAccounts] = useState<any[]>([]);
+  const [selectedAccount, setSelectedAccount] =
+    useState<FakeAccount | null>(null);
+  const [accounts, setAccounts] =
+    useState<FakeAccount[]>([]);
 
   useEffect(() => {
   fetch("/api/fake-accounts")
@@ -17,10 +43,31 @@ export default function FakeAccounts() {
     .catch((err) => console.error(err));
 }, []);
 
-  const filtered = accounts.filter((acc) =>
-    acc.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    acc.email.toLowerCase().includes(searchQuery.toLowerCase())
+ const filtered = accounts.filter((acc) => {
+
+  const search = searchQuery.toLowerCase();
+
+  return (
+
+    (acc.reported_user || "")
+      .toLowerCase()
+      .includes(search) ||
+
+    (acc.title || "")
+      .toLowerCase()
+      .includes(search) ||
+
+    (acc.message || "")
+      .toLowerCase()
+      .includes(search) ||
+
+    (acc.description || "")
+      .toLowerCase()
+      .includes(search)
+
   );
+
+});
 
   return (
     <div className="space-y-6 p-8">
@@ -54,15 +101,19 @@ export default function FakeAccounts() {
           >
             <div className="mb-4 flex items-start justify-between">
               <div>
-                <h3 className="font-semibold text-foreground">{account.username}</h3>
-                <p className="text-xs text-muted-foreground mt-1">{account.email}</p>
+                <h3 className="font-semibold text-foreground">
+                  {account.reported_user}
+                </h3>
+
+                <p className="text-xs text-muted-foreground mt-1">
+                  {account.title}
+                </p>
+
               </div>
               <div className="rounded-lg bg-red-100 px-3 py-1 text-right">
                 <p className="text-xs font-medium text-red-700">Risk</p>
                 <p className="text-lg font-bold text-red-700">
-                  {account.riskScore
-                    ? `${account.riskScore}%`
-                    : "N/A"}
+                  {account.anomaly_score}%
               </p>
               </div>
             </div>
@@ -71,16 +122,9 @@ export default function FakeAccounts() {
               <div>
                 <p className="text-xs font-medium text-foreground mb-2">Suspicious Indicators</p>
                 <div className="flex flex-wrap gap-1">
-                  {account.suspiciousIndicators.slice(0, 3).map((indicator, i) => (
-                    <span key={i} className="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-700">
-                      {indicator}
-                    </span>
-                  ))}
-                  {account.suspiciousIndicators.length > 3 && (
-                    <span className="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-700">
-                      +{account.suspiciousIndicators.length - 3} more
-                    </span>
-                  )}
+                  <span className="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-700">
+                    {account.suspicion_reason}
+                  </span>
                 </div>
               </div>
 
@@ -103,8 +147,8 @@ export default function FakeAccounts() {
           <div className="max-h-96 w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6">
             <div className="mb-4 flex items-start justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-foreground">{selectedAccount.username}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{selectedAccount.email}</p>
+                <h2 className="text-2xl font-bold text-foreground">{selectedAccount.reported_user}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{selectedAccount.title}</p>
               </div>
               <button
                 onClick={() => setSelectedAccount(null)}
@@ -120,8 +164,12 @@ export default function FakeAccounts() {
                 <div className="flex items-center gap-4">
                   <div className="h-32 w-32 rounded-full bg-red-100 flex items-center justify-center">
                     <div className="text-center">
-                      <p className="text-3xl font-bold text-red-600">{selectedAccount.riskScore}</p>
-                      <p className="text-xs text-red-600 mt-1">High Risk</p>
+                      <p className="text-3xl font-bold text-red-600">
+                        {selectedAccount.anomaly_score}%
+                      </p>
+                      <p className="text-xs text-red-600 mt-1">
+                        {selectedAccount.severity}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -133,8 +181,8 @@ export default function FakeAccounts() {
                   <div className="rounded-lg bg-muted p-3">
                     <p className="text-xs text-muted-foreground">Created</p>
                     <p className="text-sm font-medium text-foreground mt-1">
-                      {selectedAccount.createdAt
-                        ? new Date(selectedAccount.createdAt).toLocaleDateString()
+                      {selectedAccount.detected_at
+                        ? new Date(selectedAccount.detected_at).toLocaleDateString()
                         : "N/A"}
                     </p>
                   </div>
@@ -147,38 +195,14 @@ export default function FakeAccounts() {
                 </div>
               </div>
 
-              <div>
-                <p className="text-sm font-medium text-foreground mb-2">IP Addresses</p>
-                <div className="space-y-1">
-                  {selectedAccount.ipAddresses.map((ip, i) => (
-                    <p key={i} className="text-sm text-muted-foreground bg-muted rounded px-3 py-2">
-                      {ip}
-                    </p>
-                  ))}
-                </div>
-              </div>
+              <div className="flex items-start gap-2 text-sm">
 
-              <div>
-                <p className="text-sm font-medium text-foreground mb-2">Suspicious Indicators</p>
-                <div className="space-y-2">
-                  {selectedAccount.suspiciousIndicators.map((indicator, i) => (
-                    <div key={i} className="flex items-start gap-2 text-sm">
-                      <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-foreground">{indicator}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
 
-              <div>
-                <p className="text-sm font-medium text-foreground mb-2">Recent Activities</p>
-                <div className="space-y-1">
-                  {selectedAccount.activities.map((activity, i) => (
-                    <p key={i} className="text-sm text-muted-foreground bg-muted rounded px-3 py-2">
-                      {activity}
-                    </p>
-                  ))}
-                </div>
+                <span className="text-foreground">
+                  {selectedAccount.suspicion_reason}
+                </span>
+
               </div>
             </div>
 

@@ -14,12 +14,12 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
-import Alerts from "./pages/Alerts";
+
 import FakeAccounts from "./pages/FakeAccounts";
 import Cyberbullying from "./pages/Cyberbullying";
 import Threats from "./pages/Threats";
 import ImageMisuse from "./pages/ImageMisuse";
-import ActivityLogs from "./pages/ActivityLogs";
+
 import Investigation from "./pages/Investigation";
 import UserManagement from "./pages/UserManagement";
 import UserProfile from "./pages/UserProfile";
@@ -62,12 +62,12 @@ const AppRoutes = () => {
 
       {/* Protected Routes */}
       <Route path="/" element={isAuthenticated ? <Layout><Dashboard /></Layout> : <Navigate to="/landing" />} />
-      <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
+      
       <Route path="/fake-accounts" element={<ProtectedRoute><FakeAccounts /></ProtectedRoute>} />
       <Route path="/cyberbullying" element={<ProtectedRoute><Cyberbullying /></ProtectedRoute>} />
       <Route path="/threats" element={<ProtectedRoute><Threats /></ProtectedRoute>} />
       <Route path="/image-misuse" element={<ProtectedRoute><ImageMisuse /></ProtectedRoute>} />
-      <Route path="/activity-logs" element={<ProtectedRoute><ActivityLogs /></ProtectedRoute>} />
+     
       <Route path="/investigation" element={<ProtectedRoute><Investigation /></ProtectedRoute>} />
       <Route path="/user-management" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
       <Route path="/user-profile/:userId" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />

@@ -20,12 +20,12 @@ import { cn } from '@/lib/utils';
 
 const menuItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
-  { label: 'Alerts', icon: Bell, path: '/alerts' },
+  
   { label: 'Fake Accounts', icon: Users, path: '/fake-accounts' },
   { label: 'Cyberbullying', icon: MessageSquare, path: '/cyberbullying' },
   { label: 'Threats', icon: AlertTriangle, path: '/threats' },
   { label: 'Image Misuse', icon: Image, path: '/image-misuse' },
-  { label: 'Activity Logs', icon: Activity, path: '/activity-logs' },
+ 
   { label: 'Investigation', icon: Search, path: '/investigation' },
   { label: 'User Management', icon: Users, path: '/user-management' },
   { label: 'Reports', icon: BarChart3, path: '/reports' },

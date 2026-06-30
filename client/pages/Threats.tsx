@@ -6,15 +6,29 @@ import { cn } from "@/lib/utils";
 const ITEMS_PER_PAGE = 10;
 
 interface ThreatCase {
+
   id: string;
-  sender: string;
-  receiver: string;
-  message_text: string;
+
+  title: string;
+
+  reported_user: string;
+
+  message: string;
+
+  description: string;
+
   threat_type: string;
+
+  confidence: number;
+
   confidence_score: number;
+
   severity: string;
+
   status: string;
+
   created_at: string;
+
 }
 
 export default function Threats() {
@@ -36,16 +50,35 @@ export default function Threats() {
       .catch(console.error);
   }, []);
 
-  const filtered = threats.filter((threat) => {
-    const search = searchQuery.toLowerCase();
+ const filtered = threats.filter((threat) => {
 
-    return (
-      threat.sender.toLowerCase().includes(search) ||
-      threat.receiver.toLowerCase().includes(search) ||
-      threat.message_text.toLowerCase().includes(search) ||
-      threat.threat_type.toLowerCase().includes(search)
-    );
-  });
+  const search = searchQuery.toLowerCase();
+
+  return (
+
+    (threat.reported_user || "")
+      .toLowerCase()
+      .includes(search) ||
+
+    (threat.message || "")
+      .toLowerCase()
+      .includes(search) ||
+
+    (threat.title || "")
+      .toLowerCase()
+      .includes(search) ||
+
+    (threat.description || "")
+      .toLowerCase()
+      .includes(search) ||
+
+    (threat.threat_type || "")
+      .toLowerCase()
+      .includes(search)
+
+  );
+
+});
 
   const totalPages = Math.ceil(
     filtered.length / ITEMS_PER_PAGE
@@ -127,11 +160,11 @@ export default function Threats() {
                 </th>
 
                 <th className="px-6 py-3 text-left">
-                  Sender
+                  Reported User
                 </th>
 
                 <th className="px-6 py-3 text-left">
-                  Receiver
+                  Report Title
                 </th>
 
                 <th className="px-6 py-3 text-left">
@@ -177,11 +210,11 @@ export default function Threats() {
                     </td>
 
                     <td className="px-6 py-4">
-                      {threat.sender}
+                      {threat.reported_user}
                     </td>
 
                     <td className="px-6 py-4">
-                      {threat.receiver}
+                      {threat.title}
                     </td>
 
                     <td className="px-6 py-4">
@@ -329,11 +362,11 @@ export default function Threats() {
               <div>
 
                 <p className="text-sm text-muted-foreground">
-                  Sender
+                  Reported User
                 </p>
 
                 <p className="font-medium">
-                  {selectedThreat.sender}
+                  {selectedThreat.reported_user}
                 </p>
 
               </div>
@@ -341,11 +374,11 @@ export default function Threats() {
               <div>
 
                 <p className="text-sm text-muted-foreground">
-                  Receiver
+                  Title
                 </p>
 
                 <p className="font-medium">
-                  {selectedThreat.receiver}
+                  {selectedThreat.title}
                 </p>
 
               </div>
@@ -353,13 +386,13 @@ export default function Threats() {
               <div>
 
                 <p className="text-sm text-muted-foreground">
-                  Threat Message
+                  Reported Message
                 </p>
 
                 <div className="mt-2 rounded-lg border bg-red-50 p-4">
 
                   <p className="text-sm">
-                    {selectedThreat.message_text}
+                    {selectedThreat.message}
                   </p>
 
                 </div>

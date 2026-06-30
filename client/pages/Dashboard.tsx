@@ -170,6 +170,7 @@ export default function Dashboard() {
               <Line type="monotone" dataKey="alerts" stroke="#4A90E2" strokeWidth={2} dot={{ fill: '#4A90E2' }} />
               <Line type="monotone" dataKey="cases" stroke="#14B8A6" strokeWidth={2} dot={{ fill: '#14B8A6' }} />
               <Line type="monotone" dataKey="threats" stroke="#EF4444" strokeWidth={2} dot={{ fill: '#EF4444' }} />
+              console.log(chartData);
             </LineChart>
           </ResponsiveContainer>
         </div>
