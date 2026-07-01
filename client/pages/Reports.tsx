@@ -25,6 +25,15 @@ export default function Reports() {
 
   const [title, setTitle] = useState("");
 
+  const [showInvestigation, setShowInvestigation] =
+    useState(false);
+
+  const [requestReason, setRequestReason] =
+    useState("");
+
+  const [priority, setPriority] =
+    useState("NORMAL");
+
   
 
   const [reportedUser, setReportedUser] =
@@ -350,12 +359,32 @@ const rejected = reports.filter(
                       View Details
                     </Button>
 
+                    {user?.role !== "ADMIN" &&
+                      report.status !== "PENDING" &&
+                      !report.investigation_requested && (
+
+                        <Button
+                          onClick={() => {
+
+                            setSelectedReport(report);
+
+                            setShowInvestigation(true);
+
+                          }}
+                        >
+
+                          Request Investigation
+
+                        </Button>
+
+                    )}
+
                     <Button
                       variant="destructive"
                       onClick={async () => {
 
                         const confirmDelete = window.confirm(
-                          "Delete this report?\n\nThis will remove it from your report history. Investigators will still retain a copy."
+                          "Delete this report?\n\nThis will remove it from your report history."
                         );
 
                         if (!confirmDelete) return;
@@ -375,19 +404,16 @@ const rejected = reports.filter(
                             prev.filter((r) => r.id !== report.id)
                           );
 
-                        } else {
-
-                          alert("Failed to delete report.");
-
                         }
 
                       }}
                     >
+
                       Delete
+
                     </Button>
 
                   </div>
-
                 </div>
 
                 </div>
@@ -613,6 +639,177 @@ const rejected = reports.filter(
           </div>
 
         </div>
+
+      )}
+
+      {showInvestigation && selectedReport && (
+
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+      <div className="bg-white rounded-xl w-[650px] p-6">
+
+      <h2 className="text-2xl font-bold">
+
+      Request Investigation
+
+      </h2>
+
+      <p className="text-gray-500 mt-2">
+
+      Explain why you need further assistance.
+
+      </p>
+
+      <textarea
+
+      className="w-full border rounded-lg p-3 mt-6"
+
+      rows={5}
+
+      placeholder="Describe why you want SafeSocial to investigate..."
+
+      value={requestReason}
+
+      onChange={(e)=>
+      setRequestReason(e.target.value)
+      }
+
+      />
+
+      <select
+
+      className="w-full border rounded-lg p-3 mt-4"
+
+      value={priority}
+
+      onChange={(e)=>
+      setPriority(e.target.value)
+      }
+
+      >
+
+      <option value="LOW">
+
+      Low
+
+      </option>
+
+      <option value="MEDIUM">
+
+      Medium
+
+      </option>
+
+      <option value="HIGH">
+
+      High
+
+      </option>
+
+      <option value="CRITICAL">
+
+      Critical
+
+      </option>
+
+      </select>
+
+      <div className="flex justify-end gap-3 mt-6">
+
+      <Button
+
+      variant="outline"
+
+      onClick={()=>{
+      setShowInvestigation(false);
+      setRequestReason("");
+      }}
+
+      >
+
+      Cancel
+
+      </Button>
+
+      <Button
+
+      onClick={async () => {
+
+  if (!requestReason.trim()) {
+
+    alert("Please enter a reason.");
+
+    return;
+
+  }
+
+  const response = await fetch(
+
+    "/api/investigations",
+
+    {
+
+      method: "POST",
+
+      headers: {
+
+        "Content-Type": "application/json",
+
+      },
+
+      body: JSON.stringify({
+
+        report_id: selectedReport.id,
+
+        user_id: user?.id,
+
+        target_username: selectedReport.reported_user,
+
+        severity: selectedReport.ai_result,
+
+        evidence: selectedReport.message,
+
+        request_reason: requestReason,
+
+        priority,
+
+      }),
+
+    }
+
+  );
+
+  const data = await response.json();
+
+  if (data.success) {
+
+    alert("Investigation request submitted successfully!");
+
+    setShowInvestigation(false);
+
+    setRequestReason("");
+
+    setPriority("MEDIUM");
+
+  } else {
+
+    alert("Failed to submit investigation request.");
+
+  }
+
+}}
+
+      >
+
+      Submit
+
+      </Button>
+
+      </div>
+
+      </div>
+
+      </div>
 
       )}
             {/* New Report Modal */}

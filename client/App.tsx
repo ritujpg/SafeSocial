@@ -19,7 +19,7 @@ import FakeAccounts from "./pages/FakeAccounts";
 import Cyberbullying from "./pages/Cyberbullying";
 import Threats from "./pages/Threats";
 import ImageMisuse from "./pages/ImageMisuse";
-
+import OfficialReport from "./pages/OfficialReport";
 import Investigation from "./pages/Investigation";
 import UserManagement from "./pages/UserManagement";
 import UserProfile from "./pages/UserProfile";
@@ -68,7 +68,14 @@ const AppRoutes = () => {
       <Route path="/cyberbullying" element={<ProtectedRoute><Cyberbullying /></ProtectedRoute>} />
       <Route path="/threats" element={<ProtectedRoute><Threats /></ProtectedRoute>} />
       <Route path="/image-misuse" element={<ProtectedRoute><ImageMisuse /></ProtectedRoute>} />
-     
+     <Route
+        path="/official-report/:investigationId"
+        element={
+          <ProtectedRoute>
+            <OfficialReport />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/investigation" element={<ProtectedRoute><Investigation /></ProtectedRoute>} />
       <Route path="/user-management" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
       <Route path="/user-profile/:userId" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
