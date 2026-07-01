@@ -9,8 +9,10 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Investigation() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
 
   const [investigations, setInvestigations] = useState<any[]>([]);
@@ -18,7 +20,7 @@ export default function Investigation() {
   const [selectedCase, setSelectedCase] = useState<any>(null);
 
   useEffect(() => {
-    fetch("/api/investigations")
+    fetch(`/api/investigations?userId=${user?.id}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {

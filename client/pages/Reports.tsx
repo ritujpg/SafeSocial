@@ -8,9 +8,12 @@ import {
   Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Reports() {
   const [searchQuery, setSearchQuery] = useState("");
+
+  const { user } = useAuth();
 
   const [reports, setReports] = useState<any[]>([]);
 
@@ -40,7 +43,7 @@ export default function Reports() {
     useState<File | null>(null);
 
   useEffect(() => {
-    fetch("/api/reports")
+    fetch(`/api/reports?userId=${user?.id}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -738,6 +741,8 @@ export default function Reports() {
 
                         body: JSON.stringify({
 
+                          userId: user?.id,
+
                           title,
 
                           reportedUser,
@@ -749,7 +754,7 @@ export default function Reports() {
                           description,
 
                           reportedBy:
-                            "SafeSocial User",
+                            user?.fullName,
 
                         }),
 
@@ -779,7 +784,7 @@ export default function Reports() {
 
                     setScreenshot(null);
 
-                    fetch("/api/reports")
+                    fetch(`/api/reports?userId=${user?.id}`)
                       .then((res) =>
                         res.json()
                       )

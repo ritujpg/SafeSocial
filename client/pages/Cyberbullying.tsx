@@ -2,17 +2,19 @@ import { useEffect, useState } from 'react';
 import { Search, X, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useAuth } from "@/context/AuthContext";
 
 const ITEMS_PER_PAGE = 10;
 
 export default function Cyberbullying() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCase, setSelectedCase] = useState<any>(null);
   const [cases, setCases] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch("/api/cyberbullying")
+    fetch(`/api/cyberbullying?userId=${user?.id}`)
       .then((res) => res.json())
       .then((data) => {
         setCases(data);

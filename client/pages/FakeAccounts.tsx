@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Search, X, Shield, TrendingUp, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useAuth } from "@/context/AuthContext";
 
 interface FakeAccount {
 
@@ -28,6 +29,7 @@ interface FakeAccount {
 }
 
 export default function FakeAccounts() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAccount, setSelectedAccount] =
     useState<FakeAccount | null>(null);
@@ -35,7 +37,7 @@ export default function FakeAccounts() {
     useState<FakeAccount[]>([]);
 
   useEffect(() => {
-  fetch("/api/fake-accounts")
+  fetch(`/api/fake-accounts?userId=${user?.id}`)
     .then((res) => res.json())
     .then((data) => {
       setAccounts(data);

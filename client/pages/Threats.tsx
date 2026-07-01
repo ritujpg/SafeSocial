@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Search, X, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -32,6 +33,7 @@ interface ThreatCase {
 }
 
 export default function Threats() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -42,7 +44,7 @@ export default function Threats() {
     useState<ThreatCase[]>([]);
 
   useEffect(() => {
-    fetch("/api/threats")
+    fetch(`/api/threats?userId=${user?.id}`)
       .then((res) => res.json())
       .then((data) => {
         setThreats(data);

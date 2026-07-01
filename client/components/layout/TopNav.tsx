@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { Search, Bell, User, Settings, X, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { mockUsers, mockAlerts, mockActivityLogs } from '@/lib/mock-data';
+import { useAuth } from "@/context/AuthContext";
 
 interface TopNavProps {
   onMenuOpen?: () => void;
@@ -12,8 +12,10 @@ interface TopNavProps {
 export function TopNav({ onMenuOpen }: TopNavProps) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [users, setUsers] = useState<any[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const notifications = [
     {
@@ -51,6 +53,25 @@ export function TopNav({ onMenuOpen }: TopNavProps) {
     month: 'long',
     day: 'numeric',
   });
+  useEffect(() => {
+
+  fetch("/api/users")
+
+    .then((res) => res.json())
+
+    .then((data) => {
+
+      if (data.success) {
+
+        setUsers(data.users);
+
+      }
+
+    })
+
+    .catch(console.error);
+
+}, []);
 
   return (
     <header className="fixed right-0 top-0 z-30 h-16 w-full md:w-[calc(100%-256px)] border-b border-border bg-white">
@@ -79,15 +100,13 @@ export function TopNav({ onMenuOpen }: TopNavProps) {
             {searchOpen && searchQuery.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-2 w-full rounded-lg border border-border bg-white shadow-lg max-h-96 overflow-y-auto z-50">
                 {(() => {
-                  const userResults = mockUsers.filter(u =>
+                  const userResults = users.filter(u =>
                     u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     u.id.toLowerCase().includes(searchQuery.toLowerCase())
                   ).slice(0, 3);
 
-                  const alertResults = mockAlerts.filter(a =>
-                    a.id.toLowerCase().includes(searchQuery.toLowerCase())
-                  ).slice(0, 3);
+                  const alertResults: any[] = [];
 
                   if (userResults.length === 0 && alertResults.length === 0) {
                     return (
@@ -217,14 +236,32 @@ export function TopNav({ onMenuOpen }: TopNavProps) {
           </button>
 
           {/* User Profile */}
-          <div className="flex items-center gap-2 md:gap-3 border-l border-border pl-2 md:pl-6">
+         <div className="flex items-center gap-2 md:gap-3 border-l border-border pl-2 md:pl-6">
+
             <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
-              JD
+
+              {(user?.fullName ?? "U")
+                .charAt(0)
+                .toUpperCase()}
+
             </div>
+
             <div className="text-sm hidden sm:block">
-              <p className="font-medium text-foreground">John Doe</p>
-              <p className="text-xs text-muted-foreground">Administrator</p>
+
+              <p className="font-medium text-foreground">
+
+                {user?.fullName ?? "User"}
+
+              </p>
+
+              <p className="text-xs text-muted-foreground">
+
+                {user?.email ?? ""}
+
+              </p>
+
             </div>
+
           </div>
         </div>
       </div>

@@ -36,16 +36,21 @@ export const createReport: RequestHandler = async (
 
     const {
 
+      userId,
+
       title,
+
       reportedUser,
+
       profileUrl,
+
       message,
+
       description,
+
       reportedBy,
 
     } = req.body;
-
-    console.log(req.body);
 
     // ----------------------------
     // Save Report
@@ -55,22 +60,24 @@ export const createReport: RequestHandler = async (
 
       `
       INSERT INTO reports
-      (
-        title,
-        reported_user,
-        profile_url,
-        message,
-        description,
-        reported_by
-      )
+        (
+          user_id,
+          title,
+          reported_user,
+          profile_url,
+          message,
+          description,
+          reported_by
+        )
 
-      VALUES
-      ($1,$2,$3,$4,$5,$6)
+        VALUES
+        ($1,$2,$3,$4,$5,$6,$7)
 
       RETURNING *;
       `,
 
       [
+        userId,
         title,
         reportedUser,
         profileUrl,
@@ -195,6 +202,7 @@ export const createReport: RequestHandler = async (
               `
               INSERT INTO cyberbullying
               (
+                user_id,
                 report_id,
                 target_username,
                 message,
@@ -207,9 +215,11 @@ export const createReport: RequestHandler = async (
               ($1,$2,$3,$4,$5,$6)
               `,
 
-              [
+              
 
-                result.rows[0].id,
+                [
+                  userId,
+                  result.rows[0].id,
 
                 reportedUser,
 
@@ -252,6 +262,7 @@ export const createReport: RequestHandler = async (
               `
               INSERT INTO threat_cases
               (
+                user_id,
                 message_id,
                 threat_type,
                 confidence_score,
@@ -260,14 +271,16 @@ export const createReport: RequestHandler = async (
               )
 
               VALUES
-              ($1,$2,$3,$4,$5)
+              ($1,$2,$3,$4,$5,$6)
 
               RETURNING *;
               `,
 
-              [
+              
 
-                result.rows[0].id,
+                [
+                  userId,
+                  result.rows[0].id,
 
                 "Direct Threat",
 
@@ -311,6 +324,7 @@ export const createReport: RequestHandler = async (
               `
               INSERT INTO fake_accounts
               (
+                user_id,
                 report_id,
                 suspicion_reason,
                 anomaly_score,
@@ -319,12 +333,14 @@ export const createReport: RequestHandler = async (
               )
 
               VALUES
-              ($1,$2,$3,$4,$5)
+              ($1,$2,$3,$4,$5,$6)
               `,
 
-              [
+              
 
-                result.rows[0].id,
+                [
+                  userId,
+                  result.rows[0].id,
 
                 description || message,
 
@@ -410,14 +426,20 @@ export const getReports: RequestHandler = async (
 
   try {
 
+    const { userId } = _req.query;
+
     const result = await pool.query(
 
-      `
-      SELECT *
-      FROM reports
-      WHERE user_deleted = FALSE
-      ORDER BY created_at DESC;
-      `
+    `
+    SELECT *
+    FROM reports
+    WHERE
+    user_deleted = FALSE
+    AND user_id = $1
+    ORDER BY created_at DESC;
+    `,
+
+    [userId]
 
     );
 

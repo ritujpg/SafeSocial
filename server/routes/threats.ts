@@ -2,11 +2,13 @@ import { RequestHandler } from "express";
 import { pool } from "../db";
 
 export const getThreats: RequestHandler = async (
-  _req,
+  req,
   res
 ) => {
 
   try {
+
+    const { userId } = req.query;
 
     const result = await pool.query(
 
@@ -40,26 +42,28 @@ export const getThreats: RequestHandler = async (
       FROM threat_cases tc
 
       JOIN reports r
-
       ON tc.message_id = r.id
 
-      ORDER BY tc.created_at DESC;
+      WHERE tc.user_id = $1
 
-      `
+      ORDER BY tc.created_at DESC;
+      `,
+
+      [userId]
 
     );
 
     res.json(result.rows);
 
-  } catch (err) {
+  } catch (err: any) {
 
-    console.error(err);
+    console.error("Threats Error:", err);
 
     res.status(500).json({
 
       success: false,
 
-      message: "Failed to fetch threats",
+      message: err.message,
 
     });
 

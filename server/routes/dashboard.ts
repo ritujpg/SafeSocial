@@ -2,122 +2,162 @@ import { RequestHandler } from "express";
 import { pool } from "../db";
 
 export const getDashboardStats: RequestHandler = async (
-  _req,
+  req,
   res
-) => {
+) => { const { userId } = req.query;
+
   try {
 
     const [
+
       users,
+
       fakeAccounts,
+
       cyberbullying,
+
       threats,
+
       imageMisuse,
+
       highRiskUsers,
-      recentAlerts,
-      activityLogs,
+
+      reports,
+
     ] = await Promise.all([
 
       pool.query(`
         SELECT COUNT(*)::int AS count
-        FROM users;
+        FROM reports
+        WHERE user_id = $1;
       `),
 
-      pool.query(`
+      pool.query(
+`
         SELECT COUNT(*)::int AS count
-        FROM fake_accounts;
-      `),
+        FROM fake_accounts
+        WHERE user_id = $1;
+        `,
+        [userId]
+        ),
 
-      pool.query(`
+      pool.query(
+        `
         SELECT COUNT(*)::int AS count
-        FROM cyberbullying;
-      `),
+        FROM cyberbullying
+        WHERE user_id = $1;
+        `,
+        [userId]
+      ),
 
-      pool.query(`
+      pool.query(
+        `
         SELECT COUNT(*)::int AS count
-        FROM threat_cases;
-      `),
+        FROM threat_cases
+        WHERE user_id = $1;
+        `,
+        [userId]
+      ),
 
-      pool.query(`
+      pool.query(
+        `
         SELECT COUNT(*)::int AS count
-        FROM image_misuse_cases;
-      `),
+        FROM image_misuse_cases
+        WHERE user_id = $1;
+        `,
+        [userId]
+      ),
 
-      pool.query(`
+      pool.query(
+        `
         SELECT COUNT(*)::int AS count
-        FROM users
-        WHERE risk_level = 'HIGH';
-      `),
+        FROM reports
+        WHERE
+          user_id = $1
+          AND confidence >= 80;
+        `,
+        [userId]
+      ),
 
-      pool.query(`
+
+      pool.query(
+        `
         SELECT
-          id,
-          title,
-          alert_type,
-          severity,
-          status,
-          created_at
-        FROM alerts
-        ORDER BY created_at DESC
-        LIMIT 5;
-      `),
-
-      pool.query(`
-        SELECT created_at
-        FROM activity_logs
+          created_at,
+          ai_result
+        FROM reports
+        WHERE user_id = $1
         ORDER BY created_at ASC;
-      `),
+        `,
+        [userId]
+      ),
 
     ]);
 
-    // Activity Trend
+    // --------------------------
+    // Monthly Graph
+    // --------------------------
 
-    const groupedActivity: Record<string, number> = {};
+    const monthNames = [
 
-    activityLogs.rows.forEach((row) => {
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
 
-      const date = new Date(
-        row.created_at
-      ).toLocaleDateString();
+    ];
 
-      groupedActivity[date] =
-        (groupedActivity[date] || 0) + 1;
+    const activityTrend = monthNames.map(
+      (month, index) => {
 
-    });
+        const reportsInMonth =
+          reports.rows.filter(
+            (report: any) =>
+              new Date(
+                report.created_at
+              ).getMonth() === index
+          );
 
-    const activityTrend = Object.entries(
-      groupedActivity
-    ).map(([date, value]) => ({
-      date,
-      alerts: value,
-      cases: value,
-      threats: value,
-    }));
+        return {
 
-    // Pie Chart Data
+          month,
 
-    const alertDistribution = [
-      {
-        type: "Fake Accounts",
-        value: fakeAccounts.rows[0].count,
-        color: "#F59E0B",
-      },
-      {
-        type: "Cyberbullying",
-        value: cyberbullying.rows[0].count,
-        color: "#EF4444",
-      },
-      {
-        type: "Threats",
-        value: threats.rows[0].count,
-        color: "#8B5CF6",
-      },
-      {
-        type: "Image Misuse",
-        value: imageMisuse.rows[0].count,
-        color: "#14B8A6",
-      },
-    ].filter((item) => item.value > 0);
+          reports:
+            reportsInMonth.length,
+
+          cyberbullying:
+            reportsInMonth.filter(
+              (r: any) =>
+                r.ai_result ===
+                "Cyberbullying"
+            ).length,
+
+          threats:
+            reportsInMonth.filter(
+              (r: any) =>
+                r.ai_result ===
+                "Threat"
+            ).length,
+
+          fakeAccounts:
+            reportsInMonth.filter(
+              (r: any) =>
+                r.ai_result ===
+                "Fake Account"
+            ).length,
+
+        };
+
+      }
+    );
 
     res.json({
 
@@ -125,9 +165,11 @@ export const getDashboardStats: RequestHandler = async (
 
       stats: {
 
-        totalUsers: users.rows[0].count,
+        totalUsers:
+          users.rows[0].count,
 
-        fakeAccounts: fakeAccounts.rows[0].count,
+        fakeAccounts:
+          fakeAccounts.rows[0].count,
 
         cyberbullyingCases:
           cyberbullying.rows[0].count,
@@ -143,31 +185,7 @@ export const getDashboardStats: RequestHandler = async (
 
       },
 
-      recentAlerts: recentAlerts.rows.map(
-        (alert) => ({
-
-          id: alert.id,
-
-          user: "System",
-
-          type: alert.alert_type,
-
-          timestamp: alert.created_at,
-
-          riskLevel:
-            alert.severity.toLowerCase(),
-
-          status:
-            alert.status.toLowerCase(),
-
-          title: alert.title,
-
-        })
-      ),
-
       activityTrend,
-
-      alertDistribution,
 
     });
 
@@ -187,6 +205,7 @@ export const getDashboardStats: RequestHandler = async (
     });
 
   }
+
 };
 
 export const getMonthlyAnalytics: RequestHandler = (
@@ -197,16 +216,6 @@ export const getMonthlyAnalytics: RequestHandler = (
   res.json({
 
     success: true,
-
-    analytics: {
-
-      fakeAccounts: 0,
-
-      cyberbullying: 0,
-
-      threats: 0,
-
-    },
 
   });
 

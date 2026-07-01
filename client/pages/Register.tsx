@@ -48,15 +48,26 @@ export default function Register() {
 
     setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      if (register(formData.fullName, formData.username, formData.email, formData.password)) {
-        navigate('/');
+      const success = await register(
+        formData.fullName,
+        formData.username,
+        formData.email,
+        formData.password
+      );
+
+      if (success) {
+
+        navigate("/");
+
       } else {
-        setError('Registration failed. Please try again.');
+
+        setError(
+          "Registration failed. Please try again."
+        );
+
       }
+
       setLoading(false);
-    }, 500);
   };
 
   return (

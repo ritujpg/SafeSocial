@@ -18,8 +18,18 @@ export const getMonthlyAnalytics: RequestHandler = async (
     const reports = result.rows;
 
     const monthNames = [
-      "Jan","Feb","Mar","Apr","May","Jun",
-      "Jul","Aug","Sep","Oct","Nov","Dec"
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
     ];
 
     const monthlyData = monthNames.map((month, index) => {
@@ -33,17 +43,21 @@ export const getMonthlyAnalytics: RequestHandler = async (
 
         month,
 
-        alerts: reportsInMonth.length,
+        reports: reportsInMonth.length,
 
-        cases: reportsInMonth.filter(
+        cyberbullying: reportsInMonth.filter(
           (r: any) =>
-            r.ai_result === "Cyberbullying" ||
-            r.ai_result === "Fake Account"
+            r.ai_result === "Cyberbullying"
         ).length,
 
         threats: reportsInMonth.filter(
           (r: any) =>
             r.ai_result === "Threat"
+        ).length,
+
+        fakeAccounts: reportsInMonth.filter(
+          (r: any) =>
+            r.ai_result === "Fake Account"
         ).length,
 
       };

@@ -1,80 +1,228 @@
 import { RequestHandler } from "express";
-import fs from "fs";
-import path from "path";
+import { pool } from "../db";
 
-const usersFile = path.join(
-  process.cwd(),
-  "server",
-  "data",
-  "users.json"
-);
+export const register: RequestHandler = async (
+  req,
+  res
+) => {
 
-export const register: RequestHandler = (req, res) => {
-  const { name, username, email, password } = req.body;
+  try {
 
-  const users = JSON.parse(
-    fs.readFileSync(usersFile, "utf8")
-  );
+    const {
 
-  const existingUser = users.find(
-    (user: any) =>
-      user.username === username ||
-      user.email === email
-  );
+      name,
 
-  if (existingUser) {
-    return res.status(400).json({
-      success: false,
-      message: "User already exists",
+      username,
+
+      email,
+
+      password,
+
+    } = req.body;
+
+    const existing = await pool.query(
+
+      `
+      SELECT *
+      FROM users
+      WHERE
+        username = $1
+        OR email = $2;
+      `,
+
+      [
+
+        username,
+
+        email,
+
+      ]
+
+    );
+
+    if (existing.rows.length > 0) {
+
+      return res.status(400).json({
+
+        success: false,
+
+        message: "Username or Email already exists.",
+
+      });
+
+    }
+
+    const result = await pool.query(
+
+      `
+      INSERT INTO users
+      (
+
+        username,
+
+        display_name,
+
+        email,
+
+        password_hash,
+
+        risk_score,
+
+        risk_level,
+
+        status
+
+      )
+
+      VALUES
+      (
+
+        $1,
+
+        $2,
+
+        $3,
+
+        $4,
+
+        0,
+
+        'LOW',
+
+        'ACTIVE'
+
+      )
+
+      RETURNING *;
+      `,
+
+      [
+
+        username,
+
+        name,
+
+        email,
+
+        password,
+
+      ]
+
+    );
+
+    res.json({
+
+      success: true,
+
+      message: "Registration Successful",
+
+      user: result.rows[0],
+
     });
+
   }
 
-  const newUser = {
-    id: `USR-${Date.now()}`,
-    username,
-    email,
-    password,
-    fullName: name,
-  };
+  catch (err) {
 
-  users.push(newUser);
+    console.error(err);
 
-  fs.writeFileSync(
-    usersFile,
-    JSON.stringify(users, null, 2)
-  );
+    res.status(500).json({
 
-  res.json({
-    success: true,
-    message: "Registration successful",
-    user: newUser,
-  });
+      success: false,
+
+      message: "Registration Failed",
+
+    });
+
+  }
+
 };
 
-export const login: RequestHandler = (req, res) => {
-  const { email, password } = req.body;
+export const login: RequestHandler = async (
 
-  const users = JSON.parse(
-    fs.readFileSync(usersFile, "utf8")
-  );
+  req,
 
-  const user = users.find(
-    (u: any) =>
-      (u.username === email ||
-        u.email === email) &&
-      u.password === password
-  );
+  res
 
-  if (!user) {
-    return res.status(401).json({
-      success: false,
-      message: "Invalid credentials",
+) => {
+
+  try {
+
+    const {
+
+      email,
+
+      password,
+
+    } = req.body;
+
+    const result = await pool.query(
+
+      `
+      SELECT *
+      FROM users
+      WHERE
+      (
+
+        email = $1
+
+        OR
+
+        username = $1
+
+      )
+
+      AND
+
+      password_hash = $2;
+      `,
+
+      [
+
+        email,
+
+        password,
+
+      ]
+
+    );
+
+    if (result.rows.length === 0) {
+
+      return res.status(401).json({
+
+        success: false,
+
+        message: "Invalid Credentials",
+
+      });
+
+    }
+
+    res.json({
+
+      success: true,
+
+      message: "Login Successful",
+
+      user: result.rows[0],
+
     });
+
   }
 
-  res.json({
-    success: true,
-    message: "Login successful",
-    user,
-  });
+  catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+
+      success: false,
+
+      message: "Login Failed",
+
+    });
+
+  }
+
 };

@@ -1,13 +1,19 @@
-import { Request, Response } from "express";
+import { RequestHandler } from "express";
 import { pool } from "../db";
 
-export const getFakeAccounts = async (
-  req: Request,
-  res: Response
+export const getFakeAccounts: RequestHandler = async (
+  req,
+  res
 ) => {
+
   try {
-    const result = await pool.query(`
-    SELECT
+
+    const { userId } = req.query;
+
+    const result = await pool.query(
+
+      `
+      SELECT
 
         fa.id,
 
@@ -31,23 +37,37 @@ export const getFakeAccounts = async (
 
         r.confidence
 
-    FROM fake_accounts fa
+      FROM fake_accounts fa
 
-    JOIN reports r
+      JOIN reports r
+      ON fa.report_id = r.id
 
-    ON fa.report_id = r.id
+      WHERE fa.user_id = $1
 
-    ORDER BY fa.detected_at DESC;
-    `);
+      ORDER BY fa.detected_at DESC;
+      `,
 
-   res.json(result.rows);
-   
+      [userId]
+
+    );
+
+    res.json(result.rows);
+
   } catch (err: any) {
-    console.error("Fake Accounts Error:", err);
+
+    console.error(
+      "Fake Accounts Error:",
+      err
+    );
 
     res.status(500).json({
+
       success: false,
+
       message: err.message,
+
     });
+
   }
+
 };
