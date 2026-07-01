@@ -14,7 +14,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
-
+import Alerts from "./pages/Alerts";
 import FakeAccounts from "./pages/FakeAccounts";
 import Cyberbullying from "./pages/Cyberbullying";
 import Threats from "./pages/Threats";
@@ -26,6 +26,7 @@ import UserProfile from "./pages/UserProfile";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import CaseManagement from "./pages/CaseManagement";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,22 @@ const AppRoutes = () => {
       <Route path="/user-profile/:userId" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
       <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+      <Route
+        path="/alerts"
+        element={
+          <ProtectedRoute>
+            <Alerts />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/case-management"
+        element={
+          <ProtectedRoute>
+            <CaseManagement />
+          </ProtectedRoute>
+        }
+      />
 
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />

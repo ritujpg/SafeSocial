@@ -164,7 +164,6 @@ export const createReport: RequestHandler = async (
           // ----------------------------
 
           await pool.query(
-
             `
             UPDATE reports
 
@@ -172,30 +171,25 @@ export const createReport: RequestHandler = async (
 
               ai_status = $1,
               ai_result = $2,
-              confidence = $3
+              confidence = $3,
+              status = $4
 
-            WHERE id = $4
+            WHERE id = $5
             `,
-
             [
-
               "Completed",
-
               ai.category,
-
               ai.confidence,
-
+              "PENDING",
               result.rows[0].id,
-
             ]
-
-          );
+            );
 
                     // --------------------------------
           // Cyberbullying
           // --------------------------------
 
-          if (ai.category === "Cyberbullying") {
+          /*if (ai.category === "Cyberbullying") {
 
             await pool.query(
 
@@ -372,7 +366,7 @@ export const createReport: RequestHandler = async (
         }
           console.log(
             "AI Analysis Completed."
-          );
+          ); */
 
         } catch (error) {
 
@@ -420,28 +414,63 @@ export const createReport: RequestHandler = async (
 // ----------------------------
 
 export const getReports: RequestHandler = async (
-  _req,
+  req,
   res
 ) => {
 
   try {
 
-    const { userId } = _req.query;
+    const { userId } = req.query;
 
-    const result = await pool.query(
+    let result;
 
-    `
-    SELECT *
-    FROM reports
-    WHERE
-    user_deleted = FALSE
-    AND user_id = $1
-    ORDER BY created_at DESC;
-    `,
+    // ----------------------------
+    // ADMIN
+    // ----------------------------
 
-    [userId]
+    if (!userId) {
 
-    );
+      result = await pool.query(
+
+        `
+        SELECT
+          r.*,
+          u.display_name,
+          u.username,
+          u.email
+        FROM reports r
+        JOIN users u
+        ON r.user_id = u.id
+        WHERE r.user_deleted = FALSE
+        ORDER BY r.created_at DESC;
+        `
+
+      );
+
+    }
+
+    // ----------------------------
+    // USER
+    // ----------------------------
+
+    else {
+
+      result = await pool.query(
+
+        `
+        SELECT *
+        FROM reports
+        WHERE
+          user_deleted = FALSE
+          AND user_id = $1
+        ORDER BY created_at DESC;
+        `,
+
+        [userId]
+
+      );
+
+    }
 
     res.json({
 
@@ -561,25 +590,19 @@ export const getReportAnalytics: RequestHandler = async (
 
     const reports = result.rows;
 
-    const submitted = reports.filter(
-      (r: any) => r.status === "Submitted"
+    const pending = reports.filter(
+      (r: any) => r.status === "PENDING"
     ).length;
 
-    const underReview = reports.filter(
-      (r: any) =>
-        r.status === "Pending" ||
-        r.status === "Under Review"
-    ).length;
-
-    const resolved = reports.filter(
-      (r: any) =>
-        r.status === "Resolved"
+    const approved = reports.filter(
+      (r: any) => r.status === "APPROVED"
     ).length;
 
     const rejected = reports.filter(
-      (r: any) =>
-        r.status === "Rejected"
+      (r: any) => r.status === "REJECTED"
     ).length;
+
+const total = reports.length;
 
     res.json({
 
@@ -587,15 +610,15 @@ export const getReportAnalytics: RequestHandler = async (
 
       analytics: {
 
-        submitted,
+        total,
 
-        underReview,
+        pending,
 
-        resolved,
+        approved,
 
         rejected,
 
-      }
+      }   
 
     });
 

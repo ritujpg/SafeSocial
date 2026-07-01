@@ -26,11 +26,18 @@ import {
 } from "./routes/reports";
 import {getMonthlyAnalytics } from "./routes/monthlyAnalytics";
 import { exportCsv } from "./routes/exportCsv";
+
+import { getThreats } from "./routes/threats";
+import { getAlerts } from "./routes/alerts";
+import {
+  approveAlert,
+  rejectAlert,
+} from "./routes/alertActions";
 import {
   getInvestigations,
   createInvestigation,
+  completeInvestigation,
 } from "./routes/investigations";
-import { getThreats } from "./routes/threats";
 
 
 
@@ -93,8 +100,22 @@ app.get(
   app.get("/api/activity-logs", getActivityLogs);
   app.get("/api/cyberbullying", getCyberbullyingCases);
   app.get("/api/investigations", getInvestigations);
+  app.patch(
+  "/api/investigations/:id",
+  completeInvestigation
+);
   app.post("/api/investigations", createInvestigation);
   app.get("/api/threats", getThreats);
+  app.get("/api/alerts", getAlerts);
+  app.post(
+    "/api/alerts/:id/approve",
+    approveAlert
+  );
+
+  app.post(
+    "/api/alerts/:id/reject",
+    rejectAlert
+  );
 
   return app;
 }

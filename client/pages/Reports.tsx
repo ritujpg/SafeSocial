@@ -43,15 +43,26 @@ export default function Reports() {
     useState<File | null>(null);
 
   useEffect(() => {
-    fetch(`/api/reports?userId=${user?.id}`)
+
+    const url =
+      user?.role === "ADMIN"
+        ? "/api/reports"
+        : `/api/reports?userId=${user?.id}`;
+
+    fetch(url)
       .then((res) => res.json())
       .then((data) => {
+
         if (data.success) {
+
           setReports(data.reports);
+
         }
+
       })
       .catch(console.error);
-  }, []);
+
+  }, [user]);
 
   const filteredReports = reports.filter((report) => {
 
@@ -73,25 +84,20 @@ export default function Reports() {
 
   });
 
-  const submitted =
-    reports.length;
+ const total = reports.length;
 
-  const underReview =
-    reports.filter(
-      (r) =>
-        r.status === "Pending" ||
-        r.status === "Under Review"
-    ).length;
+const pending = reports.filter(
+  (r) => r.status === "PENDING"
+).length;
 
-  const resolved =
-    reports.filter(
-      (r) => r.status === "Resolved"
-    ).length;
+const approved = reports.filter(
+  (r) => r.status === "APPROVED"
+).length;
 
-  const rejected =
-    reports.filter(
-      (r) => r.status === "Rejected"
-    ).length;
+const rejected = reports.filter(
+  (r) => r.status === "REJECTED"
+).length;
+
 
   return (
     <div className="space-y-8 p-8">
@@ -112,6 +118,8 @@ export default function Reports() {
 
         </div>
 
+       {user?.role !== "ADMIN" && (
+
         <Button
           onClick={() =>
             setShowNewReport(true)
@@ -120,6 +128,8 @@ export default function Reports() {
           <Plus className="mr-2 h-4 w-4" />
           New Report
         </Button>
+
+      )}
 
       </div>
 
@@ -155,11 +165,11 @@ export default function Reports() {
             <div>
 
               <p className="text-sm text-muted-foreground">
-                Submitted
+                Total Reports
               </p>
 
               <p className="text-3xl font-bold">
-                {submitted}
+                {total}
               </p>
 
             </div>
@@ -177,11 +187,11 @@ export default function Reports() {
             <div>
 
               <p className="text-sm text-muted-foreground">
-                Under Review
+                Pending
               </p>
 
               <p className="text-3xl font-bold">
-                {underReview}
+                {pending}
               </p>
 
             </div>
@@ -199,11 +209,11 @@ export default function Reports() {
             <div>
 
               <p className="text-sm text-muted-foreground">
-                Resolved
+                Approved
               </p>
 
               <p className="text-3xl font-bold">
-                {resolved}
+                {approved}
               </p>
 
             </div>
@@ -241,12 +251,18 @@ export default function Reports() {
 
         <div className="border-b p-6">
 
-          <h2 className="text-xl font-semibold">
-            My Reports
+          <h2>
+
+          {user?.role === "ADMIN"
+            ? "All Reports"
+            : "My Reports"}
+
           </h2>
 
           <p className="mt-1 text-sm text-muted-foreground">
-            View the status of all reports you've submitted.
+            {user?.role === "ADMIN"
+              ? "View and manage all reports submitted by users."
+              : "View the status of all reports you've submitted."}
           </p>
 
         </div>
@@ -313,11 +329,11 @@ export default function Reports() {
                   <span
                     className={`rounded-full px-4 py-1 text-sm font-medium
                       ${
-                        report.status === "Resolved"
+                        report.status === "APPROVED"
                           ? "bg-green-100 text-green-700"
-                          : report.status === "Rejected"
+                          :  report.status === "REJECTED"
                           ? "bg-red-100 text-red-700"
-                          : report.status === "Under Review"
+                          : report.status === "PENDING"
                           ? "bg-blue-100 text-blue-700"
                           : "bg-yellow-100 text-yellow-700"
                       }`}
@@ -601,7 +617,7 @@ export default function Reports() {
       )}
             {/* New Report Modal */}
 
-      {showNewReport && (
+      {showNewReport && user?.role !== "ADMIN" && (
 
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 p-6">
 

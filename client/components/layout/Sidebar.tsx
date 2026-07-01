@@ -6,38 +6,79 @@ import {
   MessageSquare,
   AlertTriangle,
   Image,
-  Search,
   BarChart3,
+  FolderOpen,
   Shield,
-  Activity,
   X,
-} from 'lucide-react';
+} from "lucide-react";
 import { cn } from '@/lib/utils';
 
+
 const menuItems = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
 
-  { label: 'Fake Accounts', icon: Users, path: '/fake-accounts' },
-  { label: 'Cyberbullying', icon: MessageSquare, path: '/cyberbullying' },
-  { label: 'Threats', icon: AlertTriangle, path: '/threats' },
-  { label: 'Image Misuse', icon: Image, path: '/image-misuse' },
-  { label: 'Investigation', icon: Search, path: '/investigation' },
-  { label: 'Reports', icon: BarChart3, path: '/reports' },
+  // ---------------- USER + ADMIN ----------------
 
-  // ADMIN ONLY
   {
-    label: 'User Management',
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    path: "/",
+  },
+
+  {
+    label: "Reports",
+    icon: BarChart3,
+    path: "/reports",
+  },
+
+  {
+    label: "Fake Accounts",
     icon: Users,
-    path: '/user-management',
-    adminOnly: true,
+    path: "/fake-accounts",
   },
+
   {
-    label: 'Activity Logs',
-    icon: Activity,
-    path: '/activity-logs',
+    label: "Cyberbullying",
+    icon: MessageSquare,
+    path: "/cyberbullying",
+  },
+
+  {
+    label: "Threats",
+    icon: AlertTriangle,
+    path: "/threats",
+  },
+
+  {
+    label: "Image Misuse",
+    icon: Image,
+    path: "/image-misuse",
+  },
+
+  // ---------------- ADMIN ONLY ----------------
+
+  {
+    label: "Alerts",
+    icon: AlertTriangle,
+    path: "/alerts",
     adminOnly: true,
   },
+
+  {
+    label: "User Management",
+    icon: Users,
+    path: "/user-management",
+    adminOnly: true,
+  },
+
+  {
+    label: "Case Management",
+    icon: FolderOpen,
+    path: "/case-management",
+    adminOnly: true,
+  },
+
 ];
+
 
 interface SidebarProps {
   isOpen?: boolean;

@@ -11,20 +11,25 @@ export const getInvestigations = async (
 
   try {
 
-    const { userId } = req.query;
+   const { userId } = req.query;
 
-    const result = await pool.query(
-
-      `
-      SELECT *
-      FROM investigations
-      WHERE user_id = $1
-      ORDER BY opened_at DESC;
-      `,
-
-      [userId]
-
-    );
+    const result = userId
+      ? await pool.query(
+          `
+          SELECT *
+          FROM investigations
+          WHERE user_id = $1
+          ORDER BY opened_at DESC;
+          `,
+          [userId]
+        )
+      : await pool.query(
+          `
+          SELECT *
+          FROM investigations
+          ORDER BY opened_at DESC;
+          `
+        );
 
     res.json({
 
@@ -53,6 +58,7 @@ export const getInvestigations = async (
 // ==============================
 // CREATE INVESTIGATION
 // ==============================
+
 export const createInvestigation = async (
   req: Request,
   res: Response
@@ -62,11 +68,9 @@ export const createInvestigation = async (
 
     const {
 
+      report_id,
+
       user_id,
-
-      source_case_id,
-
-      source_module,
 
       target_username,
 
@@ -74,11 +78,9 @@ export const createInvestigation = async (
 
       evidence,
 
-      assigned_to,
+      request_reason,
 
-      created_by,
-
-      findings,
+      priority,
 
     } = req.body;
 
@@ -88,11 +90,9 @@ export const createInvestigation = async (
       INSERT INTO investigations
       (
 
+        report_id,
+
         user_id,
-
-        source_case_id,
-
-        source_module,
 
         target_username,
 
@@ -100,11 +100,9 @@ export const createInvestigation = async (
 
         evidence,
 
-        assigned_to,
+        request_reason,
 
-        created_by,
-
-        findings,
+        priority,
 
         status,
 
@@ -116,7 +114,7 @@ export const createInvestigation = async (
 
       (
 
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,'OPEN',NOW()
+        $1,$2,$3,$4,$5,$6,$7,'PENDING',NOW()
 
       )
 
@@ -125,11 +123,9 @@ export const createInvestigation = async (
 
       [
 
+        report_id,
+
         user_id,
-
-        source_case_id,
-
-        source_module,
 
         target_username,
 
@@ -137,11 +133,9 @@ export const createInvestigation = async (
 
         evidence,
 
-        assigned_to,
+        request_reason,
 
-        created_by,
-
-        findings,
+        priority,
 
       ]
 
@@ -158,6 +152,108 @@ export const createInvestigation = async (
   } catch (err: any) {
 
     console.error("Create Investigation Error:", err);
+
+    res.status(500).json({
+
+      success: false,
+
+      message: err.message,
+
+    });
+
+  }
+
+};
+// ==============================
+// COMPLETE INVESTIGATION
+// ==============================
+
+export const completeInvestigation = async (
+  req: Request,
+  res: Response
+) => {
+
+  try {
+
+    const { id } = req.params;
+
+    const {
+
+      assigned_to,
+
+      findings,
+
+      recommendations,
+
+      suggested_actions,
+
+      can_assist,
+
+      final_notes,
+
+    } = req.body;
+
+    const result = await pool.query(
+
+      `
+      UPDATE investigations
+
+      SET
+
+        assigned_to = $2,
+
+        findings = $3,
+
+        recommendations = $4,
+
+        suggested_actions = $5,
+
+        can_assist = $6,
+
+        final_notes = $7,
+
+        status = 'COMPLETED',
+
+        closed_at = NOW(),
+
+        updated_at = NOW()
+
+      WHERE id = $1
+
+      RETURNING *;
+      `,
+
+      [
+
+        id,
+
+        assigned_to,
+
+        findings,
+
+        recommendations,
+
+        suggested_actions,
+
+        can_assist,
+
+        final_notes,
+
+      ]
+
+    );
+
+    res.json({
+
+      success: true,
+
+      investigation: result.rows[0],
+
+    });
+
+  } catch (err: any) {
+
+    console.error(err);
 
     res.status(500).json({
 

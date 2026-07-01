@@ -26,12 +26,15 @@ export const getDashboardStats: RequestHandler = async (
 
     ] = await Promise.all([
 
-      pool.query(`
+      pool.query(
+        `
         SELECT COUNT(*)::int AS count
         FROM reports
         WHERE user_id = $1;
-      `),
-
+        `,
+        [userId]
+      ),
+      
       pool.query(
 `
         SELECT COUNT(*)::int AS count
