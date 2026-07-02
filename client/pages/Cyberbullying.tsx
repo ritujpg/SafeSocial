@@ -3,6 +3,7 @@ import { Search, X, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from "@/context/AuthContext";
+import FurtherAssistanceModal from "@/components/FurtherAssistanceModal";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -12,6 +13,8 @@ export default function Cyberbullying() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCase, setSelectedCase] = useState<any>(null);
   const [cases, setCases] = useState<any[]>([]);
+  const [showAssistance, setShowAssistance] =
+  useState(false);
 
   useEffect(() => {
     fetch(`/api/cyberbullying?userId=${user?.id}`)
@@ -166,9 +169,148 @@ export default function Cyberbullying() {
             </div>
 
             <div className="mt-6 flex gap-3 border-t border-border pt-4">
-              <Button className="flex-1">Take Action</Button>
-              <Button variant="outline" className="flex-1" onClick={() => setSelectedCase(null)}>Close</Button>
-            </div>
+
+                {selectedCase.sent_to_user ? (
+
+                  <>
+
+                    <Button
+
+                      variant="outline"
+
+                      className="flex-1"
+
+                      onClick={() => {
+
+                        window.open(
+
+                          `/api/investigation-reports/${selectedCase.investigation_id}/pdf`,
+
+                          "_blank"
+
+                        );
+
+                      }}
+
+                    >
+
+                      Download Official Report
+
+                    </Button>
+
+                    <Button
+
+                      variant="outline"
+
+                      className="flex-1"
+
+                      onClick={() => setShowAssistance(true)}
+
+                    >
+
+                      Further Assistance
+
+                    </Button>
+
+                  </>
+
+                ) : (
+
+                  <Button
+
+                    className="flex-1"
+
+                    onClick={async () => {
+
+                      const response = await fetch(
+
+                        "/api/investigations",
+
+                        {
+
+                          method: "POST",
+
+                          headers: {
+
+                            "Content-Type": "application/json",
+
+                          },
+
+                          body: JSON.stringify({
+
+                            report_id: selectedCase.report_id,
+
+                            user_id: user?.id,
+
+                            target_username: selectedCase.targetUsername,
+
+                            severity: selectedCase.severity.toUpperCase(),
+
+                            evidence: selectedCase.message,
+
+                            request_reason:
+
+                              "User requested investigation",
+
+                            priority:
+
+                              selectedCase.severity === "severe"
+
+                                ? "HIGH"
+
+                                : selectedCase.severity === "moderate"
+
+                                ? "MEDIUM"
+
+                                : "LOW",
+
+                          }),
+
+                        }
+
+                      );
+
+                      const data = await response.json();
+
+                      alert(data.message);
+
+                      if (data.success) {
+
+                        window.location.reload();
+
+                      }
+
+                    }}
+
+                  >
+
+                    Request Investigation
+
+                  </Button>
+
+                )}
+
+                <Button
+
+                  variant="outline"
+
+                  className="flex-1"
+
+                  onClick={() => setSelectedCase(null)}
+
+                >
+
+                  Close
+
+                </Button>
+
+              </div>
+
+
+            <FurtherAssistanceModal
+              open={showAssistance}
+              onClose={() => setShowAssistance(false)}
+            />
           </div>
         </div>
       )}

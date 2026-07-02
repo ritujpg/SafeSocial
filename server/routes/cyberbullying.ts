@@ -15,25 +15,37 @@ export const getCyberbullyingCases: RequestHandler = async (
       `
       SELECT
 
-        id,
+        c.id,
 
-        target_username,
+        c.report_id,
 
-        message,
+        c.target_username,
 
-        severity,
+        c.message,
 
-        detected_keywords,
+        c.severity,
 
-        status,
+        c.detected_keywords,
 
-        detected_at
+        c.status,
 
-      FROM cyberbullying
+        c.detected_at,
 
-      WHERE user_id = $1
+        i.id AS investigation_id,
 
-      ORDER BY detected_at DESC;
+        ir.sent_to_user
+
+    FROM cyberbullying c
+
+    LEFT JOIN investigations i
+    ON i.report_id = c.report_id
+
+    LEFT JOIN investigation_reports ir
+    ON ir.investigation_id = i.id
+
+    WHERE c.user_id = $1
+
+    ORDER BY c.detected_at DESC;
       `,
 
       [userId]
@@ -43,6 +55,12 @@ export const getCyberbullyingCases: RequestHandler = async (
     const cases = result.rows.map((row) => ({
 
       id: row.id,
+
+      report_id: row.report_id,
+
+      investigation_id: row.investigation_id,
+
+      sent_to_user: row.sent_to_user,
 
       targetUsername: row.target_username,
 
