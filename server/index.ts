@@ -39,6 +39,18 @@ import {
   completeInvestigation,
 } from "./routes/investigations";
 
+import {
+
+  generateInvestigationReport,
+
+  getInvestigationReport,
+
+  sendReportToUser,
+
+  downloadInvestigationPDF,
+
+} from "./routes/investigationReports";
+
 
 
 export function createServer() {
@@ -116,6 +128,26 @@ app.get(
     "/api/alerts/:id/reject",
     rejectAlert
   );
+
+  app.post(
+  "/api/investigation-reports/:investigationId/generate",
+  generateInvestigationReport
+);
+
+app.get(
+  "/api/investigation-reports/:investigationId",
+  getInvestigationReport
+);
+
+app.patch(
+  "/api/investigation-reports/:investigationId/send",
+  sendReportToUser
+);
+
+app.get(
+  "/api/investigation-reports/:investigationId/pdf",
+  downloadInvestigationPDF
+);
 
   return app;
 }

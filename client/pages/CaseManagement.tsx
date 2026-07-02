@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useNavigate } from "react-router-dom";
 
 interface Investigation {
   id: string;
@@ -36,11 +37,10 @@ export default function CaseManagement() {
   const [selectedCase, setSelectedCase] =
     useState<Investigation | null>(null);
 
-  const [assignedTo, setAssignedTo] =
-    useState("");
-
   const [findings, setFindings] =
     useState("");
+
+  const navigate = useNavigate();
 
   const [recommendations, setRecommendations] =
     useState("");
@@ -263,10 +263,6 @@ export default function CaseManagement() {
 
                   setSelectedCase(c);
 
-                  setAssignedTo(
-                    c.assigned_to || ""
-                  );
-
                   setFindings(
                     c.findings || ""
                   );
@@ -484,33 +480,6 @@ export default function CaseManagement() {
 
             </div>
 
-            {/* Assigned */}
-
-            <div className="mt-8">
-
-              <label className="font-medium">
-
-                Assigned Investigator
-
-              </label>
-
-              <Input
-
-                className="mt-2"
-
-                value={assignedTo}
-
-                onChange={(e) =>
-
-                  setAssignedTo(e.target.value)
-
-                }
-
-                placeholder="Enter investigator name"
-
-              />
-
-            </div>
 
             {/* Findings */}
 
@@ -584,8 +553,6 @@ export default function CaseManagement() {
                   "Preserve Evidence",
                   "Contact Platform",
                   "Cyber Crime Cell",
-                  "Enable MFA",
-                  "Password Reset",
                   "Monitor Account",
                   "Legal Consultation",
                   "Block User",
@@ -752,8 +719,6 @@ export default function CaseManagement() {
 
                       body: JSON.stringify({
 
-                        assigned_to: assignedTo,
-
                         findings,
 
                         recommendations,
@@ -774,23 +739,49 @@ export default function CaseManagement() {
 
                   if (data.success) {
 
-                    alert("Investigation completed successfully.");
+                    const reportResponse = await fetch(
+
+                      `/api/investigation-reports/${selectedCase.id}/generate`,
+
+                      {
+
+                        method: "POST",
+
+                      }
+
+                    );
+
+                    const reportData =
+                      await reportResponse.json();
+
+                    if (!reportData.success) {
+
+                      alert(reportData.message);
+
+                      return;
+
+                    }
 
                     await loadCases();
 
                     setSelectedCase(null);
+
+                    navigate(
+
+                      `/official-report/${selectedCase.id}`
+
+                    );
 
                   } else {
 
                     alert(data.message);
 
                   }
-
                 }}
 
               >
 
-                Complete Investigation
+                Generate Official Investigation Report
 
               </Button>
 

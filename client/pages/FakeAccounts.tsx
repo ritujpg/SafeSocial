@@ -3,12 +3,20 @@ import { Search, X, Shield, TrendingUp, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import FurtherAssistanceModal from "@/components/FurtherAssistanceModal";
 
 interface FakeAccount {
 
   id: string;
 
+  report_id: string;
+
   reported_user: string;
+
+  investigation_id?: string;
+
+  sent_to_user?: boolean;
 
   title: string;
 
@@ -35,6 +43,9 @@ export default function FakeAccounts() {
     useState<FakeAccount | null>(null);
   const [accounts, setAccounts] =
     useState<FakeAccount[]>([]);
+  const navigate = useNavigate();
+  const [showAssistance, setShowAssistance] =
+    useState(false);
 
   useEffect(() => {
   fetch(`/api/fake-accounts?userId=${user?.id}`)
@@ -144,7 +155,7 @@ export default function FakeAccounts() {
       </div>
 
       {/* Account Details Modal */}
-      {selectedAccount && (
+      {selectedAccount && ( 
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="max-h-96 w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6">
             <div className="mb-4 flex items-start justify-between">
@@ -208,11 +219,91 @@ export default function FakeAccounts() {
               </div>
             </div>
 
-            <div className="mt-6 flex gap-3 border-t border-border pt-4">
-              <Button className="flex-1">Suspend Account</Button>
-              <Button variant="outline" className="flex-1">Export Report</Button>
-              <Button variant="outline" className="flex-1" onClick={() => setSelectedAccount(null)}>Close</Button>
+           <div className="mt-6 flex gap-3 border-t border-border pt-4">
+
+              {/* Investigation already completed */}
+
+              {selectedAccount.sent_to_user ? (
+
+                <>
+
+                  <Button
+
+                    variant="outline"
+
+                    className="flex-1"
+
+                    onClick={() => {
+
+                      window.open(
+
+                        `/api/investigation-reports/${selectedAccount.investigation_id}/pdf`,
+
+                        "_blank"
+
+                      );
+
+                    }}
+
+                  >
+
+                    Download Official Report
+
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setShowAssistance(true)}
+                  >
+                    Further Assistance
+                  </Button>
+                                  </>
+
+              ) : (
+
+                <Button
+
+                  variant="outline"
+
+                  className="flex-1"
+
+                  onClick={async () => {
+
+                    // Your existing Request Investigation code
+
+                  }}
+
+                >
+
+                  Request Investigation
+
+                </Button>
+
+              )}
+
+              <Button
+
+                variant="outline"
+
+                className="flex-1"
+
+                onClick={() => setSelectedAccount(null)}
+
+              >
+
+                Close
+
+              </Button>
+
             </div>
+            <FurtherAssistanceModal
+
+              open={showAssistance}
+
+              onClose={() => setShowAssistance(false)}
+
+            />
           </div>
         </div>
       )}

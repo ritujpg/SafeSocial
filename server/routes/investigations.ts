@@ -84,7 +84,33 @@ export const createInvestigation = async (
 
     } = req.body;
 
+    const existing = await pool.query(
+
+      `
+      SELECT id
+      FROM investigations
+      WHERE report_id = $1;
+      `,
+
+      [report_id]
+
+    );
+
+    if (existing.rows.length > 0) {
+
+      return res.json({
+
+        success: false,
+
+        message: "Investigation has already been requested."
+
+      });
+
+    }
+
     const result = await pool.query(
+
+      
 
       `
       INSERT INTO investigations

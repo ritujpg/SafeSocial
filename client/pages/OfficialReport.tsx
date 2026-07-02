@@ -573,23 +573,21 @@ export default function OfficialReport() {
             </Button>
 
             <Button
-              variant="secondary"
               onClick={() => {
-                alert(
-                  "Editing will be available in the next version."
-                );
-              }}
-            >
-              Edit Report
-            </Button>
 
-            <Button
-              className="bg-blue-600 hover:bg-blue-700"
-              onClick={() => {
-                window.print();
+                window.open(
+
+                  `/api/investigation-reports/${report.investigation_id}/pdf`,
+
+                  "_blank"
+
+                );
+
               }}
             >
+
               Generate PDF
+
             </Button>
 
             <Button

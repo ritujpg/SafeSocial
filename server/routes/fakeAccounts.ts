@@ -17,6 +17,8 @@ export const getFakeAccounts: RequestHandler = async (
 
         fa.id,
 
+        fa.report_id,
+
         fa.anomaly_score,
 
         fa.severity,
@@ -35,16 +37,26 @@ export const getFakeAccounts: RequestHandler = async (
 
         r.description,
 
-        r.confidence
+        r.confidence,
 
-      FROM fake_accounts fa
+        i.id AS investigation_id,
 
-      JOIN reports r
-      ON fa.report_id = r.id
+        ir.sent_to_user
 
-      WHERE fa.user_id = $1
+    FROM fake_accounts fa
 
-      ORDER BY fa.detected_at DESC;
+    JOIN reports r
+    ON fa.report_id = r.id
+
+    LEFT JOIN investigations i
+    ON i.report_id = fa.report_id
+
+    LEFT JOIN investigation_reports ir
+    ON ir.investigation_id = i.id
+
+    WHERE fa.user_id = $1
+
+    ORDER BY fa.detected_at DESC;
       `,
 
       [userId]
