@@ -3,12 +3,19 @@ import { Search, X, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
+import FurtherAssistanceModal from "@/components/FurtherAssistanceModal";
 
 const ITEMS_PER_PAGE = 10;
 
 interface ThreatCase {
 
   id: string;
+
+  report_id: string;
+
+  investigation_id?: string;
+
+  sent_to_user?: boolean;
 
   title: string;
 
@@ -39,12 +46,16 @@ export default function Threats() {
 
   const [selectedThreat, setSelectedThreat] =
     useState<ThreatCase | null>(null);
-
+  const [showAssistance, setShowAssistance] =
+    useState(false);
   const [threats, setThreats] =
     useState<ThreatCase[]>([]);
 
   useEffect(() => {
-    fetch(`/api/threats?userId=${user?.id}`)
+    fetch(
+      `/api/threats?userId=${user?.id}&role=${user?.role}`
+    )
+    
       .then((res) => res.json())
       .then((data) => {
         setThreats(data);
@@ -478,24 +489,263 @@ export default function Threats() {
 
             <div className="mt-8 flex gap-3">
 
-              <Button
-                className="flex-1 bg-red-600 hover:bg-red-700"
-              >
-                <AlertTriangle className="mr-2 h-4 w-4" />
-                Escalate Case
-              </Button>
+              <div className="mt-8 flex gap-3">
 
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() =>
-                  setSelectedThreat(null)
-                }
-              >
-                Close
-              </Button>
+              {user?.role === "ADMIN" ? (
+
+  <Button
+
+    variant="outline"
+
+    className="flex-1"
+
+    onClick={() => setSelectedThreat(null)}
+
+  >
+
+    Close
+
+  </Button>
+
+) : selectedThreat.sent_to_user ? (
+
+  <>
+
+    <Button
+
+      variant="outline"
+
+      className="flex-1"
+
+      onClick={() =>
+
+        window.open(
+
+          `/api/investigation-reports/${selectedThreat.investigation_id}/pdf`,
+
+          "_blank"
+
+        )
+
+      }
+
+    >
+
+      Download Official Report
+
+    </Button>
+
+    <Button
+
+      variant="outline"
+
+      className="flex-1"
+
+      onClick={() => setShowAssistance(true)}
+
+    >
+
+      Further Assistance
+
+    </Button>
+
+    <Button
+
+      variant="outline"
+
+      className="flex-1"
+
+      onClick={() => setSelectedThreat(null)}
+
+    >
+
+      Close
+
+    </Button>
+
+  </>
+
+) : (
+
+  <>
+
+    <Button
+
+      className="flex-1 bg-red-600 hover:bg-red-700"
+
+      onClick={async () => {
+
+
+
+                    const response = await fetch(
+
+
+
+                      "/api/investigations",
+
+
+
+                      {
+
+
+
+                        method: "POST",
+
+
+
+                        headers: {
+
+
+
+                          "Content-Type": "application/json",
+
+
+
+                        },
+
+
+
+                        body: JSON.stringify({
+
+
+
+                          report_id: selectedThreat.report_id,
+
+
+
+                          user_id: user?.id,
+
+
+
+                          target_username: selectedThreat.reported_user,
+
+
+
+                          severity: selectedThreat.severity.toUpperCase(),
+
+
+
+                          evidence: selectedThreat.message,
+
+
+
+                          request_reason:
+
+
+
+                            "User requested investigation",
+
+
+
+                          priority:
+
+
+
+                            selectedThreat.severity === "CRITICAL"
+
+
+
+                              ? "HIGH"
+
+
+
+                              : selectedThreat.severity === "HIGH"
+
+
+
+                              ? "HIGH"
+
+
+
+                              : "MEDIUM",
+
+
+
+                        }),
+
+
+
+                      }
+
+
+
+                    );
+
+
+
+                    const data = await response.json();
+
+
+
+                    console.log(data);
+
+
+
+                    if (data.success) {
+
+
+
+                      alert("Investigation request submitted successfully.");
+
+
+
+                      window.location.reload();
+
+
+
+                    } else {
+
+
+
+                      alert(data.message);
+
+
+
+                    }
+
+
+
+                  }}
+
+
+
+                >
+
+
+
+      <AlertTriangle className="mr-2 h-4 w-4" />
+
+      Request Investigation
+
+    </Button>
+
+    <Button
+
+      variant="outline"
+
+      className="flex-1"
+
+      onClick={() => setSelectedThreat(null)}
+
+    >
+
+      Close
+
+    </Button>
+
+  </>
+
+)}
+
+
+</div>
 
             </div>
+
+            <FurtherAssistanceModal
+              open={showAssistance}
+              onClose={() => setShowAssistance(false)}
+            />
 
           </div>
 

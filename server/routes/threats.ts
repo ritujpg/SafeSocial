@@ -8,50 +8,116 @@ export const getThreats: RequestHandler = async (
 
   try {
 
-    const { userId } = req.query;
+    const { userId, role } = req.query;
 
-    const result = await pool.query(
+   const result =
+  role === "ADMIN"
 
-      `
-      SELECT
+    ? await pool.query(
 
-        tc.id,
+        `
+        SELECT
 
-        tc.threat_type,
+          tc.id,
 
-        tc.confidence_score,
+          tc.message_id AS report_id,
 
-        tc.severity,
+          tc.threat_type,
 
-        tc.status,
+          tc.confidence_score,
 
-        tc.created_at,
+          tc.severity,
 
-        r.title,
+          tc.status,
 
-        r.reported_user,
+          tc.created_at,
 
-        r.message,
+          r.title,
 
-        r.description,
+          r.reported_user,
 
-        r.ai_result,
+          r.message,
 
-        r.confidence
+          r.description,
 
-      FROM threat_cases tc
+          r.ai_result,
 
-      JOIN reports r
-      ON tc.message_id = r.id
+          r.confidence,
 
-      WHERE tc.user_id = $1
+          i.id AS investigation_id,
 
-      ORDER BY tc.created_at DESC;
-      `,
+          ir.sent_to_user
 
-      [userId]
+        FROM threat_cases tc
 
-    );
+        JOIN reports r
+        ON tc.message_id = r.id
+
+        LEFT JOIN investigations i
+        ON i.report_id = tc.message_id
+
+        LEFT JOIN investigation_reports ir
+        ON ir.investigation_id = i.id
+
+        ORDER BY tc.created_at DESC;
+        `
+
+      )
+
+    : await pool.query(
+
+        `
+        SELECT
+
+          tc.id,
+
+          tc.message_id AS report_id,
+
+          tc.threat_type,
+
+          tc.confidence_score,
+
+          tc.severity,
+
+          tc.status,
+
+          tc.created_at,
+
+          r.title,
+
+          r.reported_user,
+
+          r.message,
+
+          r.description,
+
+          r.ai_result,
+
+          r.confidence,
+
+          i.id AS investigation_id,
+
+          ir.sent_to_user
+
+        FROM threat_cases tc
+
+        JOIN reports r
+        ON tc.message_id = r.id
+
+        LEFT JOIN investigations i
+        ON i.report_id = tc.message_id
+
+        LEFT JOIN investigation_reports ir
+        ON ir.investigation_id = i.id
+
+        WHERE tc.user_id = $1
+
+        ORDER BY tc.created_at DESC;
+        `,
+
+        [userId]
+
+      );
 
     res.json(result.rows);
 

@@ -272,13 +272,19 @@ export default function Cyberbullying() {
 
                       const data = await response.json();
 
-                      alert(data.message);
+                        console.log(data);
 
-                      if (data.success) {
+                        if (data.success) {
 
-                        window.location.reload();
+                          alert("Investigation request submitted successfully.");
 
-                      }
+                          window.location.reload();
+
+                        } else {
+
+                          alert(data.message);
+
+                        }
 
                     }}
 

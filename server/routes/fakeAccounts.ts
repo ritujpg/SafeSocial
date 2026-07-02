@@ -8,60 +8,112 @@ export const getFakeAccounts: RequestHandler = async (
 
   try {
 
-    const { userId } = req.query;
+    const { userId, role } = req.query;
 
-    const result = await pool.query(
+    const result =
+  role === "ADMIN"
 
-      `
-      SELECT
+    ? await pool.query(
 
-        fa.id,
+        `
+        SELECT
 
-        fa.report_id,
+          fa.id,
 
-        fa.anomaly_score,
+          fa.report_id,
 
-        fa.severity,
+          fa.anomaly_score,
 
-        fa.suspicion_reason,
+          fa.severity,
 
-        fa.status,
+          fa.suspicion_reason,
 
-        fa.detected_at,
+          fa.status,
 
-        r.title,
+          fa.detected_at,
 
-        r.reported_user,
+          r.title,
 
-        r.message,
+          r.reported_user,
 
-        r.description,
+          r.message,
 
-        r.confidence,
+          r.description,
 
-        i.id AS investigation_id,
+          r.confidence,
 
-        ir.sent_to_user
+          i.id AS investigation_id,
 
-    FROM fake_accounts fa
+          ir.sent_to_user
 
-    JOIN reports r
-    ON fa.report_id = r.id
+        FROM fake_accounts fa
 
-    LEFT JOIN investigations i
-    ON i.report_id = fa.report_id
+        JOIN reports r
+        ON fa.report_id = r.id
 
-    LEFT JOIN investigation_reports ir
-    ON ir.investigation_id = i.id
+        LEFT JOIN investigations i
+        ON i.report_id = fa.report_id
 
-    WHERE fa.user_id = $1
+        LEFT JOIN investigation_reports ir
+        ON ir.investigation_id = i.id
 
-    ORDER BY fa.detected_at DESC;
-      `,
+        ORDER BY fa.detected_at DESC;
+        `
 
-      [userId]
+      )
 
-    );
+    : await pool.query(
+
+        `
+        SELECT
+
+          fa.id,
+
+          fa.report_id,
+
+          fa.anomaly_score,
+
+          fa.severity,
+
+          fa.suspicion_reason,
+
+          fa.status,
+
+          fa.detected_at,
+
+          r.title,
+
+          r.reported_user,
+
+          r.message,
+
+          r.description,
+
+          r.confidence,
+
+          i.id AS investigation_id,
+
+          ir.sent_to_user
+
+        FROM fake_accounts fa
+
+        JOIN reports r
+        ON fa.report_id = r.id
+
+        LEFT JOIN investigations i
+        ON i.report_id = fa.report_id
+
+        LEFT JOIN investigation_reports ir
+        ON ir.investigation_id = i.id
+
+        WHERE fa.user_id = $1
+
+        ORDER BY fa.detected_at DESC;
+        `,
+
+        [userId]
+
+      );
 
     res.json(result.rows);
 

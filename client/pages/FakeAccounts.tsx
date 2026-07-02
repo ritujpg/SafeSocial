@@ -48,7 +48,9 @@ export default function FakeAccounts() {
     useState(false);
 
   useEffect(() => {
-  fetch(`/api/fake-accounts?userId=${user?.id}`)
+  fetch(
+  `/api/fake-accounts?userId=${user?.id}&role=${user?.role}`
+)
     .then((res) => res.json())
     .then((data) => {
       setAccounts(data);
