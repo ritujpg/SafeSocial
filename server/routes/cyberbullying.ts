@@ -8,73 +8,137 @@ export const getCyberbullyingCases: RequestHandler = async (
 
   try {
 
-    const { userId } = req.query;
+    const { userId, role } = req.query;
+    console.log("Cyberbullying route:");
+    console.log("role =", role);
+    console.log("userId =", userId);
 
-    const result = await pool.query(
+    const result =
+  role === "ADMIN"
 
-      `
-      SELECT
+    ? await pool.query(
 
-        c.id,
+        `
+        SELECT
 
-        c.report_id,
+    c.id,
 
-        c.target_username,
+    c.report_id,
 
-        c.message,
+    c.target_username AS reported_user,
 
-        c.severity,
+    r.title,
 
-        c.detected_keywords,
+    c.message,
 
-        c.status,
+    'Cyberbullying' AS prediction,
 
-        c.detected_at,
+    CASE
+        WHEN c.severity = 'severe' THEN 95
+        WHEN c.severity = 'moderate' THEN 75
+        ELSE 55
+    END AS confidence_score,
 
-        i.id AS investigation_id,
+    c.severity,
 
-        ir.sent_to_user
+    c.detected_keywords,
 
-    FROM cyberbullying c
+    'Random Forest' AS ai_model,
 
-    LEFT JOIN investigations i
-    ON i.report_id = c.report_id
+    'Offensive language detected.' AS reason,
 
-    LEFT JOIN investigation_reports ir
-    ON ir.investigation_id = i.id
+    c.detected_at,
 
-    WHERE c.user_id = $1
+    i.id AS investigation_id,
 
-    ORDER BY c.detected_at DESC;
-      `,
+    ir.sent_to_user
 
-      [userId]
+FROM cyberbullying c
 
-    );
+LEFT JOIN reports r
+ON c.report_id = r.id
 
-    const cases = result.rows.map((row) => ({
+LEFT JOIN investigations i
+ON i.report_id = c.report_id
 
-      id: row.id,
+LEFT JOIN investigation_reports ir
+ON ir.investigation_id = i.id
+        `
 
-      report_id: row.report_id,
+      )
 
-      investigation_id: row.investigation_id,
+    : await pool.query(
 
-      sent_to_user: row.sent_to_user,
+        `
+        SELECT
 
-      targetUsername: row.target_username,
+          c.id,
 
-      message: row.message,
+          c.report_id,
 
-      severity: row.severity.toLowerCase(),
+          c.target_username,
 
-      keywords: row.detected_keywords,
+          c.message,
 
-      status: row.status,
+          c.severity,
 
-      timestamp: row.detected_at,
+          c.detected_keywords,
 
-    }));
+          c.status,
+
+          c.detected_at,
+
+          i.id AS investigation_id,
+
+          ir.sent_to_user
+
+        FROM cyberbullying c
+
+        LEFT JOIN investigations i
+        ON i.report_id = c.report_id
+
+        LEFT JOIN investigation_reports ir
+        ON ir.investigation_id = i.id
+
+        WHERE c.user_id = $1
+
+        ORDER BY c.detected_at DESC;
+        `,
+
+        [userId]
+
+      );
+ const cases = result.rows.map((row) => ({
+
+    id: row.id,
+
+    report_id: row.report_id,
+
+    reported_user: row.reported_user,
+
+    title: row.title,
+
+    message: row.message,
+
+    prediction: row.prediction,
+
+    confidence_score: row.confidence_score,
+
+    severity: row.severity,
+
+    keywords: row.detected_keywords,
+
+    ai_model: row.ai_model,
+
+    reason: row.reason,
+
+    detected_at: row.detected_at,
+
+    investigation_id: row.investigation_id,
+
+    sent_to_user: row.sent_to_user,
+
+}));
 
     res.json(cases);
 

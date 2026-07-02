@@ -3,6 +3,7 @@ import { getActivityLogs } from "./routes/activityLogs";
 import "dotenv/config";
 import express from "express";
 import { getFakeAccounts } from "./routes/fakeAccounts";
+import { getImageMisuseCases } from "./routes/imageMisuse";
 import cors from "cors";
 import {
   getDashboardStats,
@@ -148,6 +149,8 @@ app.get(
   "/api/investigation-reports/:investigationId/pdf",
   downloadInvestigationPDF
 );
+
+app.get("/api/image-misuse", getImageMisuseCases);
 
   return app;
 }

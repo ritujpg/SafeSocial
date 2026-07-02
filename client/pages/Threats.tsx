@@ -412,79 +412,241 @@ export default function Threats() {
 
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-[150px_1fr] gap-6">
 
-                <div>
+  <div>
 
-                  <p className="text-sm text-muted-foreground">
-                    Threat Type
-                  </p>
+    <p className="mb-3 text-sm font-medium">
+      Risk Score
+    </p>
 
-                  <p className="font-medium">
-                    {selectedThreat.threat_type}
-                  </p>
+    <div className="flex h-32 w-32 items-center justify-center rounded-full bg-red-100">
 
-                </div>
+      <div className="text-center">
 
-                <div>
+        <p className="text-3xl font-bold text-red-600">
 
-                  <p className="text-sm text-muted-foreground">
-                    Confidence
-                  </p>
+          {selectedThreat.confidence_score}%
 
-                  <p className="font-medium">
-                    {selectedThreat.confidence_score}%
-                  </p>
+        </p>
 
-                </div>
+        <p className="mt-1 text-xs font-semibold text-red-600">
 
-                <div>
+          {selectedThreat.severity.toUpperCase()}
 
-                  <p className="text-sm text-muted-foreground">
-                    Severity
-                  </p>
+        </p>
 
-                  <span
-                    className={cn(
-                      "mt-1 inline-block rounded-full px-3 py-1 text-xs font-medium",
-                      getSeverityColor(
-                        selectedThreat.severity
-                      )
-                    )}
-                  >
-                    {selectedThreat.severity.toUpperCase()}
-                  </span>
+      </div>
 
-                </div>
+    </div>
 
-                <div>
+  </div>
 
-                  <p className="text-sm text-muted-foreground">
-                    Status
-                  </p>
+  <div className="rounded-xl border bg-muted/30 p-5">
 
-                  <p className="font-medium">
-                    {selectedThreat.status}
-                  </p>
+    <h3 className="mb-4 text-lg font-semibold">
 
-                </div>
+      AI Prediction
 
-              </div>
+    </h3>
 
-              <div>
+    <div className="grid grid-cols-2 gap-4">
 
-                <p className="text-sm text-muted-foreground">
-                  Detected On
-                </p>
+      <div>
 
-                <p className="font-medium">
-                  {new Date(
-                    selectedThreat.created_at
-                  ).toLocaleString()}
-                </p>
+        <p className="text-xs text-muted-foreground">
 
-              </div>
+          Prediction
 
+        </p>
+
+        <p className="font-medium">
+
+          {selectedThreat.threat_type}
+
+        </p>
+
+      </div>
+
+      <div>
+
+        <p className="text-xs text-muted-foreground">
+
+          Confidence
+
+        </p>
+
+        <p className="font-medium">
+
+          {selectedThreat.confidence_score}%
+
+        </p>
+
+      </div>
+
+      <div>
+
+        <p className="text-xs text-muted-foreground">
+
+          AI Model
+
+        </p>
+
+        <p className="font-medium">
+
+          Random Forest
+
+        </p>
+
+      </div>
+
+      <div>
+
+        <p className="text-xs text-muted-foreground">
+
+          Reason
+
+        </p>
+
+        <p className="font-medium">
+
+          Threatening language detected.
+
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+             <div className="rounded-xl border bg-muted/30 p-5">
+
+<h3 className="mb-4 text-lg font-semibold">
+
+Detection Information
+
+</h3>
+
+<div className="grid grid-cols-3 gap-5">
+
+<div>
+
+<p className="text-xs text-muted-foreground">
+
+Severity
+
+</p>
+
+<span
+className={cn(
+"mt-2 inline-block rounded-full px-3 py-1 text-xs font-medium",
+getSeverityColor(selectedThreat.severity)
+)}
+>
+
+{selectedThreat.severity.toUpperCase()}
+
+</span>
+
+</div>
+
+<div>
+
+<p className="text-xs text-muted-foreground">
+
+Detected On
+
+</p>
+
+<p className="font-medium">
+
+{new Date(selectedThreat.created_at).toLocaleString()}
+
+</p>
+
+</div>
+
+<div>
+
+<p className="text-xs text-muted-foreground">
+
+Source
+
+</p>
+
+<p className="font-medium">
+
+User Report
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+<div className="rounded-xl border bg-muted/30 p-5">
+
+  <h3 className="mb-4 text-lg font-semibold">
+    Investigation Status
+  </h3>
+
+  <div className="grid grid-cols-2 gap-6">
+
+    <div>
+
+      <p className="text-xs text-muted-foreground">
+        Investigation
+      </p>
+
+      <span
+        className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+          !selectedThreat.investigation_id
+            ? "bg-gray-100 text-gray-700"
+            : selectedThreat.sent_to_user
+            ? "bg-green-100 text-green-700"
+            : "bg-yellow-100 text-yellow-700"
+        }`}
+      >
+        {!selectedThreat.investigation_id
+          ? "Not Requested"
+          : selectedThreat.sent_to_user
+          ? "Completed"
+          : "Requested"}
+      </span>
+
+    </div>
+
+    <div>
+
+      <p className="text-xs text-muted-foreground">
+        Report
+      </p>
+
+      <span
+        className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+          !selectedThreat.investigation_id
+            ? "bg-gray-100 text-gray-700"
+            : selectedThreat.sent_to_user
+            ? "bg-green-100 text-green-700"
+            : "bg-yellow-100 text-yellow-700"
+        }`}
+      >
+        {!selectedThreat.investigation_id
+          ? "-"
+          : selectedThreat.sent_to_user
+          ? "Received"
+          : "Awaited"}
+      </span>
+
+    </div>
+
+  </div>
+
+</div>
             </div>
 
             <div className="mt-8 flex gap-3">

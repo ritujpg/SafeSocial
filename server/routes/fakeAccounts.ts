@@ -18,46 +18,44 @@ export const getFakeAccounts: RequestHandler = async (
         `
         SELECT
 
-          fa.id,
+    fa.id,
 
-          fa.report_id,
+    fa.report_id,
 
-          fa.anomaly_score,
+    r.reported_user AS reported_user,
 
-          fa.severity,
+    r.title,
 
-          fa.suspicion_reason,
+    r.message,
 
-          fa.status,
+    'Fake Account' AS prediction,
 
-          fa.detected_at,
+    ROUND(fa.anomaly_score::numeric, 0) AS confidence_score,
 
-          r.title,
+    fa.severity,
 
-          r.reported_user,
+    'Isolation Forest' AS ai_model,
 
-          r.message,
+    'Suspicious account behaviour detected.' AS reason,
 
-          r.description,
+    fa.detected_at,
 
-          r.confidence,
+    i.id AS investigation_id,
 
-          i.id AS investigation_id,
+    ir.sent_to_user
 
-          ir.sent_to_user
+FROM fake_accounts fa
 
-        FROM fake_accounts fa
+JOIN reports r
+ON fa.report_id = r.id
 
-        JOIN reports r
-        ON fa.report_id = r.id
+LEFT JOIN investigations i
+ON i.report_id = fa.report_id
 
-        LEFT JOIN investigations i
-        ON i.report_id = fa.report_id
+LEFT JOIN investigation_reports ir
+ON ir.investigation_id = i.id
 
-        LEFT JOIN investigation_reports ir
-        ON ir.investigation_id = i.id
-
-        ORDER BY fa.detected_at DESC;
+ORDER BY fa.detected_at DESC;
         `
 
       )
@@ -65,50 +63,48 @@ export const getFakeAccounts: RequestHandler = async (
     : await pool.query(
 
         `
-        SELECT
+       SELECT
 
-          fa.id,
+    fa.id,
 
-          fa.report_id,
+    fa.report_id,
 
-          fa.anomaly_score,
+    r.reported_user AS reported_user,
 
-          fa.severity,
+    r.title,
 
-          fa.suspicion_reason,
+    r.message,
 
-          fa.status,
+    'Fake Account' AS prediction,
 
-          fa.detected_at,
+    ROUND((fa.anomaly_score * 100)::numeric, 0) AS confidence_score,
 
-          r.title,
+    fa.severity,
 
-          r.reported_user,
+    'Isolation Forest' AS ai_model,
 
-          r.message,
+    'Suspicious account behaviour detected.' AS reason,
 
-          r.description,
+    fa.detected_at,
 
-          r.confidence,
+    i.id AS investigation_id,
 
-          i.id AS investigation_id,
+    ir.sent_to_user
 
-          ir.sent_to_user
+FROM fake_accounts fa
 
-        FROM fake_accounts fa
+JOIN reports r
+ON fa.report_id = r.id
 
-        JOIN reports r
-        ON fa.report_id = r.id
+LEFT JOIN investigations i
+ON i.report_id = fa.report_id
 
-        LEFT JOIN investigations i
-        ON i.report_id = fa.report_id
+LEFT JOIN investigation_reports ir
+ON ir.investigation_id = i.id
 
-        LEFT JOIN investigation_reports ir
-        ON ir.investigation_id = i.id
+WHERE fa.user_id = $1
 
-        WHERE fa.user_id = $1
-
-        ORDER BY fa.detected_at DESC;
+ORDER BY fa.detected_at DESC;
         `,
 
         [userId]
